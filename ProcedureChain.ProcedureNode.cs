@@ -5,7 +5,8 @@ namespace Hillinworks.WorkflowFramework
 {
 	internal sealed partial class ProcedureChain
 	{
-		private abstract class ProcedureNode
+	    [DebuggerDisplay("Procedure: {" + nameof(ProcedureType) + "}")]
+        private abstract class ProcedureNode
 		{
 			protected ProcedureNode(Type procedureType)
 			{

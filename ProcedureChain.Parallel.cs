@@ -3,41 +3,46 @@ using System.Diagnostics;
 
 namespace Hillinworks.WorkflowFramework
 {
-	internal sealed partial class ProcedureChain
-	{
-		private partial class Parallel : ProcedureNode
-		{
-			private ProcedureChain ProcedureChain { get; }
+    internal sealed partial class ProcedureChain
+    {
+        [DebuggerDisplay("Parallel: {" + nameof(ProcedureChainLength) + "} procedures")]
+        private partial class Parallel : ProcedureNode
+        {
+            private ProcedureChain ProcedureChain { get; }
 
-			public Parallel(ProcedureChain procedureChain) : base(typeof(WrapperProcedure))
-			{
-				this.ProcedureChain = procedureChain;
-			}
+#if DEBUG
+            private int ProcedureChainLength => this.ProcedureChain.Nodes.Count;
+#endif
 
-			protected override Procedure CreateProcedure()
-			{
-				var parallelProcedure = (WrapperProcedure)base.CreateProcedure();
+            public Parallel(ProcedureChain procedureChain) : base(typeof(WrapperProcedure))
+            {
+                this.ProcedureChain = procedureChain;
+            }
 
-				parallelProcedure.ProcedureChain = this.ProcedureChain;
+            protected override Procedure CreateProcedure()
+            {
+                var parallelProcedure = (WrapperProcedure)base.CreateProcedure();
 
-				return parallelProcedure;
-			}
+                parallelProcedure.ProcedureChain = this.ProcedureChain;
 
-			protected override void Initialize(Procedure procedure, Procedure predecessor)
-			{
-				Debug.Assert(predecessor is IProcedureOutput<object>);
-				var outputPredecessor = (IProcedureOutput<object>)predecessor;
+                return parallelProcedure;
+            }
 
-				Debug.Assert(procedure is WrapperProcedure);
-				var parallelProcedure = (WrapperProcedure)procedure;
+            protected override void Initialize(Procedure procedure, Procedure predecessor)
+            {
+                Debug.Assert(predecessor is IProcedureOutput<object>);
+                var outputPredecessor = (IProcedureOutput<object>)predecessor;
 
-				outputPredecessor.Output += (sender, product) =>
-				{
-					parallelProcedure.ParallelProcessInput(predecessor, product);
-				};
+                Debug.Assert(procedure is WrapperProcedure);
+                var parallelProcedure = (WrapperProcedure)procedure;
 
-				procedure.Start();
-			}
-		}
-	}
+                outputPredecessor.Output += (sender, product) =>
+                {
+                    parallelProcedure.ParallelProcessInput(predecessor, product);
+                };
+
+                procedure.Start();
+            }
+        }
+    }
 }

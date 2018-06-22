@@ -5,6 +5,7 @@ namespace Hillinworks.WorkflowFramework
 {
 	internal sealed partial class ProcedureChain
 	{
+        
 		private sealed class Initiator : ProcedureNode
 		{
 			public Initiator(Type procedureType) : base(procedureType)
