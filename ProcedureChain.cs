@@ -50,10 +50,10 @@ namespace Hillinworks.WorkflowFramework
 
 		private void CheckInputType<TInput>()
 		{
-			if (this.CurrentProductType == null || !typeof(TInput).IsAssignableFrom(this.CurrentProductType))
+			if (this.CurrentProcedureChain.CurrentProductType == null || !typeof(TInput).IsAssignableFrom(this.CurrentProcedureChain.CurrentProductType))
 			{
 				throw new ArgumentException(
-					$"current product type '{this.CurrentProductType?.Name}' cannot be consumed by specified procedure");
+					$"current product type '{this.CurrentProcedureChain.CurrentProductType?.Name}' cannot be consumed by specified procedure");
 			}
 		}
 
@@ -89,7 +89,7 @@ namespace Hillinworks.WorkflowFramework
 
 		private void CheckCanAddInitator()
 		{
-			if (this.IsParallelChain || this.CurrentProcedureChain.Nodes.Count != 0)
+			if (this.CurrentProcedureChain.IsParallelChain || this.CurrentProcedureChain.Nodes.Count != 0)
 			{
 				throw new InvalidOperationException("cannot add an initiator when the chain is not empty");
 			}
@@ -97,7 +97,7 @@ namespace Hillinworks.WorkflowFramework
 
 		private void CheckRequireInitator()
 		{
-			if (!this.IsParallelChain && this.CurrentProcedureChain.Nodes.Count == 0)
+			if (!this.CurrentProcedureChain.IsParallelChain && this.CurrentProcedureChain.Nodes.Count == 0)
 			{
 				throw new InvalidOperationException("an initiator is required");
 			}
@@ -131,7 +131,7 @@ namespace Hillinworks.WorkflowFramework
 		{
 			this.CheckClosed();
 
-			if (!this.IsParallelChain)
+			if (!this.CurrentProcedureChain.IsParallelChain)
 			{
 				throw new InvalidOperationException("not in a parallel procedure chain");
 			}
