@@ -53,13 +53,5 @@ namespace Hillinworks.WorkflowFramework
             this.Completed?.Invoke(this, EventArgs.Empty);
         }
 
-        protected void SubscribeCompleted(Procedure predecessor)
-        {
-            predecessor.Completed += (sender, e) => { this.OnPredessorCompleted(); };
-        }
-
-        protected virtual void OnPredessorCompleted()
-        {
-        }
     }
 }
