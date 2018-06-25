@@ -27,11 +27,10 @@ namespace Hillinworks.WorkflowFramework
 
             builder.ProcedureChain.Close();
 
-            var procedures = builder.ProcedureChain.Initialize();
-
-            Debug.Assert(procedures.Length > 0);
-
             this.CancellationTokenSource = new CancellationTokenSource();
+
+            var procedures = builder.ProcedureChain.Initialize();
+            Debug.Assert(procedures.Length > 0);
 
             procedures[procedures.Length - 1].Completed += (sender, e) =>
             {
