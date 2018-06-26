@@ -23,7 +23,7 @@ namespace Hillinworks.WorkflowFramework
 		IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>()
 			where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, IProcedureOutput<TOutput>, new();
 
-		IWorkflowBuilderParallel<IWorkflowBuilder<TPredecessorProduct>, TPredecessorProduct> BeginParallel();
+		IWorkflowBuilderForEach<IWorkflowBuilder<TPredecessorProduct>, TPredecessorProduct> BeginForEach();
 
 	}
 

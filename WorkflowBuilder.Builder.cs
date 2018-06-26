@@ -53,10 +53,10 @@ namespace Hillinworks.WorkflowFramework
 				return new Builder<TOutput>(this.ProcedureChain);
 			}
 
-			public IWorkflowBuilderParallel<IWorkflowBuilder<TPredecessorProduct>, TPredecessorProduct> BeginParallel()
+			public IWorkflowBuilderForEach<IWorkflowBuilder<TPredecessorProduct>, TPredecessorProduct> BeginForEach()
 			{
-				this.ProcedureChain.BeginParallel();
-				return new BuilderParallel<IWorkflowBuilder<TPredecessorProduct>, TPredecessorProduct>(
+				this.ProcedureChain.BeginForEach();
+				return new BuilderForEach<IWorkflowBuilder<TPredecessorProduct>, TPredecessorProduct>(
 					this.ProcedureChain, () => this);
 			}
 		}

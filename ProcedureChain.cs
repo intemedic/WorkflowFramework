@@ -19,7 +19,7 @@ namespace Hillinworks.WorkflowFramework
 
 		public Workflow Workflow { get; }
 		private ProcedureChain BaseChain { get; }
-		private bool IsParallelChain => this.BaseChain != null;
+		private bool IsSubChain => this.BaseChain != null;
 		private ProcedureChain CurrentProcedureChain { get; set; }
 		private Type CurrentProductType { get; set; }
 
@@ -38,9 +38,9 @@ namespace Hillinworks.WorkflowFramework
 			this.CheckRequireInitator();
 			this.CheckInputType<TInput>();
 
-			if (this.CurrentProcedureChain.IsParallelChain && this.CurrentProcedureChain.Nodes.Count == 0)
+			if (this.CurrentProcedureChain.IsSubChain && this.CurrentProcedureChain.Nodes.Count == 0)
 			{
-				this.CurrentProcedureChain.Nodes.Add(new ParallelProductConsumer(typeof(TProcedure)));
+				this.CurrentProcedureChain.Nodes.Add(new ForEachProductConsumer(typeof(TProcedure)));
 			}
 			else
 			{
@@ -89,7 +89,7 @@ namespace Hillinworks.WorkflowFramework
 
 		private void CheckCanAddInitator()
 		{
-			if (this.CurrentProcedureChain.IsParallelChain || this.CurrentProcedureChain.Nodes.Count != 0)
+			if (this.CurrentProcedureChain.IsSubChain || this.CurrentProcedureChain.Nodes.Count != 0)
 			{
 				throw new InvalidOperationException("cannot add an initiator when the chain is not empty");
 			}
@@ -97,7 +97,7 @@ namespace Hillinworks.WorkflowFramework
 
 		private void CheckRequireInitator()
 		{
-			if (!this.CurrentProcedureChain.IsParallelChain && this.CurrentProcedureChain.Nodes.Count == 0)
+			if (!this.CurrentProcedureChain.IsSubChain && this.CurrentProcedureChain.Nodes.Count == 0)
 			{
 				throw new InvalidOperationException("an initiator is required");
 			}
@@ -113,32 +113,32 @@ namespace Hillinworks.WorkflowFramework
 			this.CurrentProcedureChain.CurrentProductType = null;
 		}
 
-		public void BeginParallel()
+		public void BeginForEach()
 		{
 			this.CheckClosed();
 
-			var parallelChain = new ProcedureChain(this.Workflow, this.CurrentProcedureChain)
+			var forEachChain = new ProcedureChain(this.Workflow, this.CurrentProcedureChain)
 			{
 				CurrentProductType = this.CurrentProcedureChain.CurrentProductType
 			};
 
-			this.CurrentProcedureChain.Nodes.Add(new Parallel(parallelChain));
+			this.CurrentProcedureChain.Nodes.Add(new ForEach(forEachChain));
 
-			this.CurrentProcedureChain = parallelChain;
+			this.CurrentProcedureChain = forEachChain;
 		}
 
-		public void EndParallel()
+		public void EndForEach()
 		{
 			this.CheckClosed();
 
-			if (!this.CurrentProcedureChain.IsParallelChain)
+			if (!this.CurrentProcedureChain.IsSubChain)
 			{
-				throw new InvalidOperationException("not in a parallel procedure chain");
+				throw new InvalidOperationException("not in a ForEach procedure chain");
 			}
 
 			if (this.CurrentProcedureChain.Nodes.Count == 0)
 			{
-				throw new InvalidOperationException("the parallel procedure chain does not contain any procedure");
+				throw new InvalidOperationException("the ForEach procedure chain does not contain any procedure");
 			}
 
 			this.CurrentProcedureChain.BaseChain.CurrentProductType = this.CurrentProcedureChain.CurrentProductType;
@@ -149,7 +149,7 @@ namespace Hillinworks.WorkflowFramework
 		///     Instantialize and initialize a chain of procedures.
 		/// </summary>
 		/// <param name="predecessor">
-		///     The predecessor procedure of this chain if it is a parallel procedure chain, otherwise it
+		///     The predecessor procedure of this chain if it is a ForEach procedure chain, otherwise it
 		///     should be null.
 		/// </param>
 		/// <returns>The instantialized procedures.</returns>
@@ -177,9 +177,9 @@ namespace Hillinworks.WorkflowFramework
 		{
 			this.CheckClosed();
 
-			if (this.CurrentProcedureChain.IsParallelChain)
+			if (this.CurrentProcedureChain.IsSubChain)
 			{
-				throw new InvalidOperationException("a parallel sub-workflow is not closed");
+				throw new InvalidOperationException("a ForEach sub-workflow is not closed");
 			}
 
 			if (this.CurrentProcedureChain.Nodes.Count == 0)

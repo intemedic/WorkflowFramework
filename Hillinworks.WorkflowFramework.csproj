@@ -43,14 +43,14 @@
     <Compile Include="IProcedureInput.cs" />
     <Compile Include="IProcedureOutput.cs" />
     <Compile Include="IWorkflowBuilder.cs" />
-    <Compile Include="IWorkflowBuilderParallel.cs" />
+    <Compile Include="IWorkflowBuilderForEach.cs" />
     <Compile Include="IWorkflowInitiator.cs" />
     <Compile Include="Procedure.cs" />
-    <Compile Include="ProcedureChain.Parallel.WrapperProcedure.cs" />
+    <Compile Include="ProcedureChain.ForEach.WrapperProcedure.cs" />
     <Compile Include="ProcedureChain.cs" />
     <Compile Include="ProcedureChain.Initiator.cs" />
-    <Compile Include="ProcedureChain.Parallel.cs" />
-    <Compile Include="ProcedureChain.ParallelProductConsumer.cs" />
+    <Compile Include="ProcedureChain.ForEach.cs" />
+    <Compile Include="ProcedureChain.ForEachProductConsumer.cs" />
     <Compile Include="ProcedureChain.ProcedureNode.cs" />
     <Compile Include="ProcedureChain.ProductConsumer.cs" />
     <Compile Include="ProcedureChain.Successor.cs" />
@@ -58,7 +58,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Workflow.cs" />
     <Compile Include="WorkflowBuilder.Builder.cs" />
-    <Compile Include="WorkflowBuilder.BuilderParallel.cs" />
+    <Compile Include="WorkflowBuilder.BuilderForEach.cs" />
     <Compile Include="WorkflowBuilder.Initiator.cs" />
     <Compile Include="WorkflowStatus.cs" />
   </ItemGroup>

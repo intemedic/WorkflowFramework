@@ -5,8 +5,8 @@ namespace Hillinworks.WorkflowFramework
 {
     internal sealed partial class ProcedureChain
     {
-        [DebuggerDisplay("Parallel: {" + nameof(ProcedureChainLength) + "} procedures")]
-        private partial class Parallel : ProcedureNode
+        [DebuggerDisplay("ForEach: {" + nameof(ProcedureChainLength) + "} procedures")]
+        private partial class ForEach : ProcedureNode
         {
             private ProcedureChain ProcedureChain { get; }
 
@@ -14,18 +14,18 @@ namespace Hillinworks.WorkflowFramework
             private int ProcedureChainLength => this.ProcedureChain.Nodes.Count;
 #endif
 
-            public Parallel(ProcedureChain procedureChain) : base(typeof(WrapperProcedure))
+            public ForEach(ProcedureChain procedureChain) : base(typeof(WrapperProcedure))
             {
                 this.ProcedureChain = procedureChain;
             }
 
             protected override Procedure CreateProcedure()
             {
-                var parallelProcedure = (WrapperProcedure)base.CreateProcedure();
+                var forEachProcedure = (WrapperProcedure)base.CreateProcedure();
 
-                parallelProcedure.ProcedureChain = this.ProcedureChain;
+                forEachProcedure.ProcedureChain = this.ProcedureChain;
 
-                return parallelProcedure;
+                return forEachProcedure;
             }
 
             protected override void Initialize(Procedure procedure, Procedure predecessor)
@@ -34,11 +34,11 @@ namespace Hillinworks.WorkflowFramework
                 var outputPredecessor = (IProcedureOutput<object>)predecessor;
 
                 Debug.Assert(procedure is WrapperProcedure);
-                var parallelProcedure = (WrapperProcedure)procedure;
+                var forEachProcedure = (WrapperProcedure)procedure;
 
                 outputPredecessor.Output += (sender, product) =>
                 {
-                    parallelProcedure.ParallelProcessInput(predecessor, product);
+                    forEachProcedure.ProcessEachInput(predecessor, product);
                 };
 
                 procedure.Start();
