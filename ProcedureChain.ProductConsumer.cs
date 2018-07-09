@@ -18,6 +18,12 @@ namespace Hillinworks.WorkflowFramework
 
 				predecessorOutput.Output += (sender, product) => procedure.InvokeProcessInput(product);
 
+				// ReSharper disable once SuspiciousTypeConversion.Global
+				if (procedure is IPredecessorComplete predcessorComplete)
+				{
+					predecessor.Completed += (sender, e) => predcessorComplete.OnPredecessorComplete();
+				}
+
 				procedure.Start();
 			}
 		}
