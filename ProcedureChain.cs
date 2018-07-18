@@ -142,7 +142,8 @@ namespace Hillinworks.WorkflowFramework
 			}
 
 			this.CurrentProcedureChain.BaseChain.CurrentProductType = this.CurrentProcedureChain.CurrentProductType;
-			this.CurrentProcedureChain = this.CurrentProcedureChain.BaseChain;
+            this.CurrentProcedureChain.IsClosed = true;
+            this.CurrentProcedureChain = this.CurrentProcedureChain.BaseChain;
 		}
 
 		/// <summary>
