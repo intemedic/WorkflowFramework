@@ -8,6 +8,6 @@ namespace Hillinworks.WorkflowFramework
 {
 	public interface IPredecessorComplete
 	{
-		void OnPredecessorComplete();
+		void OnPredecessorCompleted();
 	}
 }

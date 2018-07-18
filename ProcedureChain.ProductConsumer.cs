@@ -21,7 +21,7 @@ namespace Hillinworks.WorkflowFramework
 				// ReSharper disable once SuspiciousTypeConversion.Global
 				if (procedure is IPredecessorComplete predcessorComplete)
 				{
-					predecessor.Completed += (sender, e) => predcessorComplete.OnPredecessorComplete();
+					predecessor.Completed += (sender, e) => predcessorComplete.OnPredecessorCompleted();
 				}
 
 				procedure.Start();
