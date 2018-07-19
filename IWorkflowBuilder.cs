@@ -23,8 +23,8 @@ namespace Hillinworks.WorkflowFramework
 		IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>()
 			where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, IProcedureOutput<TOutput>, new();
 
-		IWorkflowBuilderForEach<IWorkflowBuilder<TPredecessorProduct>, TPredecessorProduct> BeginForEach();
-
+	    IWorkflowBuilder<TProduct> AddSubworkflow<TProduct>(
+			Func<IWorkflowBuilder<TPredecessorProduct>, IWorkflowBuilder<TProduct>> build);
 	}
 
 

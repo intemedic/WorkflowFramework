@@ -5,8 +5,8 @@ namespace Hillinworks.WorkflowFramework
 {
     internal sealed partial class ProcedureChain
     {
-        [DebuggerDisplay("ForEach: {" + nameof(ProcedureChainLength) + "} procedures")]
-        private partial class ForEach : ProcedureNode
+        [DebuggerDisplay("Subworkflow: {" + nameof(ProcedureChainLength) + "} procedures")]
+        private partial class Subworkflow : ProcedureNode
         {
             private ProcedureChain ProcedureChain { get; }
 
@@ -14,7 +14,7 @@ namespace Hillinworks.WorkflowFramework
             private int ProcedureChainLength => this.ProcedureChain.Nodes.Count;
 #endif
 
-            public ForEach(ProcedureChain procedureChain) : base(typeof(WrapperProcedure))
+            public Subworkflow(ProcedureChain procedureChain) : base(typeof(WrapperProcedure))
             {
                 this.ProcedureChain = procedureChain;
             }

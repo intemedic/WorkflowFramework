@@ -9,7 +9,6 @@ namespace Hillinworks.WorkflowFramework
 		{
 			this.Workflow = workflow;
 			this.BaseChain = baseChain;
-			this.CurrentProcedureChain = this;
 		}
 
 		private List<ProcedureNode> Nodes { get; }
@@ -20,7 +19,6 @@ namespace Hillinworks.WorkflowFramework
 		public Workflow Workflow { get; }
 		private ProcedureChain BaseChain { get; }
 		private bool IsSubChain => this.BaseChain != null;
-		private ProcedureChain CurrentProcedureChain { get; set; }
 		private Type CurrentProductType { get; set; }
 
 		public void AddProductConsumer<TProcedure, TInput, TOutput>()
@@ -28,7 +26,7 @@ namespace Hillinworks.WorkflowFramework
 		{
 			this.AddProductConsumer<TProcedure, TInput>();
 
-			this.CurrentProcedureChain.CurrentProductType = typeof(TOutput);
+			this.CurrentProductType = typeof(TOutput);
 		}
 
 		internal void AddProductConsumer<TProcedure, TInput>() 
@@ -38,22 +36,22 @@ namespace Hillinworks.WorkflowFramework
 			this.CheckRequireInitator();
 			this.CheckInputType<TInput>();
 
-			if (this.CurrentProcedureChain.IsSubChain && this.CurrentProcedureChain.Nodes.Count == 0)
+			if (this.IsSubChain && this.Nodes.Count == 0)
 			{
-				this.CurrentProcedureChain.Nodes.Add(new ForEachProductConsumer(typeof(TProcedure)));
+				this.Nodes.Add(new SubworkflowInitiator(typeof(TProcedure)));
 			}
 			else
 			{
-				this.CurrentProcedureChain.Nodes.Add(new ProductConsumer(typeof(TProcedure)));
+				this.Nodes.Add(new ProductConsumer(typeof(TProcedure)));
 			}
 		}
 
 		private void CheckInputType<TInput>()
 		{
-			if (this.CurrentProcedureChain.CurrentProductType == null || !typeof(TInput).IsAssignableFrom(this.CurrentProcedureChain.CurrentProductType))
+			if (this.CurrentProductType == null || !typeof(TInput).IsAssignableFrom(this.CurrentProductType))
 			{
 				throw new ArgumentException(
-					$"current product type '{this.CurrentProcedureChain.CurrentProductType?.Name}' cannot be consumed by specified procedure");
+					$"current product type '{this.CurrentProductType?.Name}' cannot be consumed by specified procedure");
 			}
 		}
 
@@ -63,8 +61,8 @@ namespace Hillinworks.WorkflowFramework
 			this.CheckClosed();
 			this.CheckRequireInitator();
 
-			this.CurrentProcedureChain.Nodes.Add(new Successor(typeof(TProcedure)));
-			this.CurrentProcedureChain.CurrentProductType = typeof(TOutput);
+			this.Nodes.Add(new Successor(typeof(TProcedure)));
+			this.CurrentProductType = typeof(TOutput);
 		}
 
 		public void AddSuccessor<TProcedure>()
@@ -73,8 +71,8 @@ namespace Hillinworks.WorkflowFramework
 			this.CheckClosed();
 			this.CheckRequireInitator();
 
-			this.CurrentProcedureChain.Nodes.Add(new Successor(typeof(TProcedure)));
-			this.CurrentProcedureChain.CurrentProductType = null;
+			this.Nodes.Add(new Successor(typeof(TProcedure)));
+			this.CurrentProductType = null;
 		}
 
 		public void AddInitiator<TProcedure, TOutput>()
@@ -83,13 +81,13 @@ namespace Hillinworks.WorkflowFramework
 			this.CheckClosed();
 			this.CheckCanAddInitator();
 
-			this.CurrentProcedureChain.Nodes.Add(new Initiator(typeof(TProcedure)));
-			this.CurrentProcedureChain.CurrentProductType = typeof(TOutput);
+			this.Nodes.Add(new Initiator(typeof(TProcedure)));
+			this.CurrentProductType = typeof(TOutput);
 		}
 
 		private void CheckCanAddInitator()
 		{
-			if (this.CurrentProcedureChain.IsSubChain || this.CurrentProcedureChain.Nodes.Count != 0)
+			if (this.IsSubChain || this.Nodes.Count != 0)
 			{
 				throw new InvalidOperationException("cannot add an initiator when the chain is not empty");
 			}
@@ -97,7 +95,7 @@ namespace Hillinworks.WorkflowFramework
 
 		private void CheckRequireInitator()
 		{
-			if (!this.CurrentProcedureChain.IsSubChain && this.CurrentProcedureChain.Nodes.Count == 0)
+			if (!this.IsSubChain && this.Nodes.Count == 0)
 			{
 				throw new InvalidOperationException("an initiator is required");
 			}
@@ -109,48 +107,15 @@ namespace Hillinworks.WorkflowFramework
 			this.CheckClosed();
 			this.CheckCanAddInitator();
 
-			this.CurrentProcedureChain.Nodes.Add(new Initiator(typeof(TProcedure)));
-			this.CurrentProcedureChain.CurrentProductType = null;
-		}
-
-		public void BeginForEach()
-		{
-			this.CheckClosed();
-
-			var forEachChain = new ProcedureChain(this.Workflow, this.CurrentProcedureChain)
-			{
-				CurrentProductType = this.CurrentProcedureChain.CurrentProductType
-			};
-
-			this.CurrentProcedureChain.Nodes.Add(new ForEach(forEachChain));
-
-			this.CurrentProcedureChain = forEachChain;
-		}
-
-		public void EndForEach()
-		{
-			this.CheckClosed();
-
-			if (!this.CurrentProcedureChain.IsSubChain)
-			{
-				throw new InvalidOperationException("not in a ForEach procedure chain");
-			}
-
-			if (this.CurrentProcedureChain.Nodes.Count == 0)
-			{
-				throw new InvalidOperationException("the ForEach procedure chain does not contain any procedure");
-			}
-
-			this.CurrentProcedureChain.BaseChain.CurrentProductType = this.CurrentProcedureChain.CurrentProductType;
-            this.CurrentProcedureChain.IsClosed = true;
-            this.CurrentProcedureChain = this.CurrentProcedureChain.BaseChain;
+			this.Nodes.Add(new Initiator(typeof(TProcedure)));
+			this.CurrentProductType = null;
 		}
 
 		/// <summary>
 		///     Instantialize and initialize a chain of procedures.
 		/// </summary>
 		/// <param name="predecessor">
-		///     The predecessor procedure of this chain if it is a ForEach procedure chain, otherwise it
+		///     The predecessor procedure of this chain if it is a subworkflow procedure chain, otherwise it
 		///     should be null.
 		/// </param>
 		/// <returns>The instantialized procedures.</returns>
@@ -178,12 +143,12 @@ namespace Hillinworks.WorkflowFramework
 		{
 			this.CheckClosed();
 
-			if (this.CurrentProcedureChain.IsSubChain)
+			if (this.IsSubChain)
 			{
-				throw new InvalidOperationException("a ForEach sub-workflow is not closed");
+				throw new InvalidOperationException("a sub-workflow is not closed");
 			}
 
-			if (this.CurrentProcedureChain.Nodes.Count == 0)
+			if (this.Nodes.Count == 0)
 			{
 				throw new InvalidOperationException("this workflow does not contain any procedure");
 			}
@@ -197,6 +162,28 @@ namespace Hillinworks.WorkflowFramework
 			{
 				throw new InvalidOperationException("cannot modify a closed procedure chain");
 			}
+		}
+
+		internal ProcedureChain CreateSubchain()
+		{
+			return new ProcedureChain(this.Workflow, this)
+			{
+				CurrentProductType = this.CurrentProductType
+			};
+		}
+
+		public void AddSubworkflow(ProcedureChain subchain)
+		{
+			if (subchain.Nodes.Count == 0)
+			{
+				throw new InvalidOperationException("the sub-workflow procedure chain does not contain any procedure");
+			}
+
+			subchain.BaseChain.CurrentProductType = subchain.CurrentProductType;
+			subchain.IsClosed = true;
+
+			this.Nodes.Add(new Subworkflow(subchain));
+
 		}
 	}
 }

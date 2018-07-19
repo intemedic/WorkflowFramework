@@ -53,12 +53,17 @@ namespace Hillinworks.WorkflowFramework
 				return new Builder<TOutput>(this.ProcedureChain);
 			}
 
-			public IWorkflowBuilderForEach<IWorkflowBuilder<TPredecessorProduct>, TPredecessorProduct> BeginForEach()
+			public IWorkflowBuilder<TProduct> AddSubworkflow<TProduct>(Func<IWorkflowBuilder<TPredecessorProduct>, IWorkflowBuilder<TProduct>> build)
 			{
-				this.ProcedureChain.BeginForEach();
-				return new BuilderForEach<IWorkflowBuilder<TPredecessorProduct>, TPredecessorProduct>(
-					this.ProcedureChain, () => this);
+
+				var subchain = this.ProcedureChain.CreateSubchain();
+				var subchainBuilder = new Builder<TPredecessorProduct>(subchain);
+				build(subchainBuilder);
+				this.ProcedureChain.AddSubworkflow(subchain);
+
+				return new Builder<TProduct>(this.ProcedureChain);
 			}
+
 		}
 
 	}

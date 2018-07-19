@@ -18,8 +18,5 @@ namespace Hillinworks.WorkflowFramework
 				  };
 			}
 		}
-
-
-
 	}
 }

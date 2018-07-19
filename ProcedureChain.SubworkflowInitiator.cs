@@ -4,9 +4,9 @@ namespace Hillinworks.WorkflowFramework
 {
 	internal sealed partial class ProcedureChain
 	{
-		private sealed class ForEachProductConsumer : ProcedureNode
+		private sealed class SubworkflowInitiator : ProcedureNode
 		{
-			public ForEachProductConsumer(Type procedureType) : base(procedureType)
+			public SubworkflowInitiator(Type procedureType) : base(procedureType)
 			{
 			}
 

@@ -4,10 +4,10 @@ namespace Hillinworks.WorkflowFramework
 {
     internal sealed partial class ProcedureChain
     {
-        private partial class ForEach
+        private partial class Subworkflow
         {
 			/// <summary>
-			/// Wrapper class to wrap a chain of ForEach procedures into a single procedure.
+			/// Wrapper class to wrap a chain of subworkflow procedures into a single procedure.
 			/// </summary>
 			private class WrapperProcedure : Procedure, IProcedureOutput<object>
             {
@@ -20,7 +20,7 @@ namespace Hillinworks.WorkflowFramework
 
                 public void ProcessEachInput(Procedure predecessor, object product)
                 {
-                    Debug.Assert(this.ProcedureChain.Nodes.Count > 0 && this.ProcedureChain.Nodes[0] is ForEachProductConsumer);
+                    Debug.Assert(this.ProcedureChain.Nodes.Count > 0 && this.ProcedureChain.Nodes[0] is SubworkflowInitiator);
 
                     lock (this.RunningThreadCountSyncObject)
                     {
