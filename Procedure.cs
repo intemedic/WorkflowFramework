@@ -35,6 +35,11 @@ namespace Hillinworks.WorkflowFramework
         /// </summary>
         internal void InvokeProcessInput(object input)
         {
+            if (input == null)
+            {
+                throw new ArgumentNullException(nameof(input));
+            }
+
             var processInputMethod = typeof(IProcedureInput<>).MakeGenericType(input.GetType())
                 .GetMethod(nameof(IProcedureInput<object>.ProcessInput));
 
