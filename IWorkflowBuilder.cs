@@ -2,12 +2,13 @@
 {
 	public interface IWorkflowBuilder
 	{
+		IWorkflowBuilder SetContext(object context);
+
 		IWorkflowBuilder AddSuccessor<TProcedure>()
 			where TProcedure : Procedure, new();
 
 		IWorkflowBuilder AddSuccessor<TProcedure>(TProcedure procedure)
 			where TProcedure : Procedure;
-
 
 		IWorkflowBuilder<TOutput> AddSuccessor<TProcedure, TOutput>()
 			where TProcedure : Procedure, IProcedureOutput<TOutput>, new();
@@ -18,6 +19,8 @@
 
 	public interface IWorkflowBuilder<out TPredecessorProduct> : IWorkflowBuilder
 	{
+		new IWorkflowBuilder<TPredecessorProduct> SetContext(object context);
+
 		IWorkflowBuilder AddProductConsumer<TProcedure>()
 			where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, new();
 

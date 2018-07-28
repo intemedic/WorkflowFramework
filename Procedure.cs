@@ -28,6 +28,8 @@ namespace Hillinworks.WorkflowFramework
 
 		public Procedure Predecessor { get; internal set; }
 		protected internal CancellationToken CancellationToken => this.Workflow.CancellationTokenSource.Token;
+		protected internal object Context { get; internal set; }
+
 		public event EventHandler Completed;
 
 		protected internal virtual void Initialize()
@@ -60,13 +62,19 @@ namespace Hillinworks.WorkflowFramework
 
 		protected virtual void OnCancelled()
 		{
+			this.CleanUp();
 		}
 
 		protected virtual void OnCompleted()
 		{
 			Debug.Assert(!this.IsCompleted);
+			this.CleanUp();
 			this.IsCompleted = true;
 			this.Completed?.Invoke(this, EventArgs.Empty);
+		}
+
+		protected virtual void CleanUp()
+		{
 		}
 	}
 }

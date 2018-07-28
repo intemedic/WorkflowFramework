@@ -11,6 +11,14 @@
 
 			private Workflow Workflow { get; }
 
+			private object Context { get; set; }
+
+			public IWorkflowInitiator SetContext(object context)
+			{
+				this.Context = context;
+				return this;
+			}
+
 			public IWorkflowBuilder StartWith<TProcedure>()
 				where TProcedure : Procedure, new()
 			{
@@ -20,7 +28,10 @@
 			public IWorkflowBuilder StartWith<TProcedure>(TProcedure procedure)
 				where TProcedure : Procedure
 			{
-				var node = new ProcedureTreeNode(procedure, null, null);
+				var node = new ProcedureTreeNode(procedure, null, null)
+				{
+					Context = this.Context
+				};
 				this.Workflow.ProcedureTree = node;
 				return new Builder(node);
 			}
@@ -34,7 +45,10 @@
 			public IWorkflowBuilder<TOutput> StartWith<TProcedure, TOutput>(TProcedure procedure)
 				where TProcedure : Procedure, IProcedureOutput<TOutput>
 			{
-				var node = new ProcedureTreeNode(procedure, null, typeof(TOutput));
+				var node = new ProcedureTreeNode(procedure, null, typeof(TOutput))
+				{
+					Context = this.Context
+				};
 				this.Workflow.ProcedureTree = node;
 				return new Builder<TOutput>(node);
 			}

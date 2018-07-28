@@ -2,6 +2,8 @@
 {
 	public interface IWorkflowInitiator
 	{
+		IWorkflowInitiator SetContext(object context);
+
 		IWorkflowBuilder StartWith<TProcedure>()
 			where TProcedure : Procedure, new();
 

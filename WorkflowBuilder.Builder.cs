@@ -11,6 +11,12 @@
 
 			public ProcedureTreeNode Node { get; }
 
+			public IWorkflowBuilder SetContext(object context)
+			{
+				this.Node.Context = context;
+				return this;
+			}
+
 			public IWorkflowBuilder AddSuccessor<TProcedure>()
 				where TProcedure : Procedure, new()
 			{
@@ -46,6 +52,11 @@
 			public Builder(ProcedureTreeNode node)
 				: base(node)
 			{
+			}
+
+			public new IWorkflowBuilder<TPredecessorProduct> SetContext(object context)
+			{
+				return (IWorkflowBuilder<TPredecessorProduct>) base.SetContext(context);
 			}
 
 			public IWorkflowBuilder AddProductConsumer<TProcedure>()

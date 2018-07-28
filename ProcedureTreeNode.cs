@@ -6,6 +6,8 @@ namespace Hillinworks.WorkflowFramework
 {
 	internal class ProcedureTreeNode
 	{
+		private object _context;
+
 		public ProcedureTreeNode(Procedure procedure, Type inputType, Type outputType)
 		{
 			this.Procedure = procedure;
@@ -25,6 +27,7 @@ namespace Hillinworks.WorkflowFramework
 		private List<ProcedureTreeNode> ProductConsumers { get; } = new List<ProcedureTreeNode>();
 
 		private IEnumerable<ProcedureTreeNode> Children => this.Successors.Union(this.ProductConsumers);
+		private ProcedureTreeNode Parent { get; set; }
 
 		private List<IPredecessorComplete> PredecessorCompleteHandlers { get; } = new List<IPredecessorComplete>();
 
@@ -33,6 +36,13 @@ namespace Hillinworks.WorkflowFramework
 		public Type OutputType { get; }
 
 		public bool IsCompleted { get; private set; }
+
+		public object Context
+		{
+			get => _context ?? this.Parent?.Context;
+			set => _context = value;
+		}
+
 		public event EventHandler Completed;
 
 		internal void Start()
@@ -93,6 +103,7 @@ namespace Hillinworks.WorkflowFramework
 		{
 			node.Procedure.Predecessor = this.Procedure;
 			this.Successors.Add(node);
+			node.Parent = this;
 			node.Completed += this.OnChildCompleted;
 		}
 
@@ -120,6 +131,7 @@ namespace Hillinworks.WorkflowFramework
 			}
 
 			this.ProductConsumers.Add(node);
+			node.Parent = this;
 			node.Completed += this.OnChildCompleted;
 
 			var predecessorCompleteInterface = node.Procedure as IPredecessorComplete;
@@ -131,6 +143,7 @@ namespace Hillinworks.WorkflowFramework
 
 		public void Initialize()
 		{
+			this.Procedure.Context = this.Context;
 			this.Procedure.Initialize();
 
 			foreach (var child in this.Children)
