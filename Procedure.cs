@@ -49,6 +49,7 @@ namespace Hillinworks.WorkflowFramework
 
         protected virtual void OnCompleted()
         {
+	        Debug.Assert(!this.IsCompleted);
             this.IsCompleted = true;
             this.Completed?.Invoke(this, EventArgs.Empty);
         }

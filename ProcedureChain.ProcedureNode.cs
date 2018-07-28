@@ -5,20 +5,23 @@ namespace Hillinworks.WorkflowFramework
 {
 	internal sealed partial class ProcedureChain
 	{
-	    [DebuggerDisplay("Procedure: {" + nameof(ProcedureType) + "}")]
-        private abstract class ProcedureNode
+		[DebuggerDisplay("Procedure: {" + nameof(ProcedureType) + "}")]
+		private abstract class ProcedureNode
 		{
-			protected ProcedureNode(Type procedureType)
+			private Func<Procedure> ProcedureFactory { get; }
+
+			protected ProcedureNode(Func<Procedure> procedureFactory)
 			{
-				Debug.Assert(typeof(Procedure).IsAssignableFrom(procedureType));
-				this.ProcedureType = procedureType;
+				this.ProcedureFactory = procedureFactory;
 			}
 
-			private Type ProcedureType { get; }
-			
+#if DEBUG
+			private Type ProcedureType => this.ProcedureFactory.Method.ReturnType;
+#endif
+
 			protected virtual Procedure CreateProcedure()
 			{
-				return (Procedure)Activator.CreateInstance(this.ProcedureType);
+				return this.ProcedureFactory();
 			}
 
 			/// <summary>

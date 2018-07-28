@@ -44,7 +44,6 @@
     <Compile Include="IProcedureInput.cs" />
     <Compile Include="IProcedureOutput.cs" />
     <Compile Include="IWorkflowBuilder.cs" />
-    <Compile Include="IWorkflowBuilderForEach.cs" />
     <Compile Include="IWorkflowInitiator.cs" />
     <Compile Include="Procedure.cs" />
     <Compile Include="ProcedureChain.ForEach.WrapperProcedure.cs" />
@@ -59,7 +58,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Workflow.cs" />
     <Compile Include="WorkflowBuilder.Builder.cs" />
-    <Compile Include="WorkflowBuilder.BuilderForEach.cs" />
     <Compile Include="WorkflowBuilder.Initiator.cs" />
     <Compile Include="WorkflowStatus.cs" />
   </ItemGroup>

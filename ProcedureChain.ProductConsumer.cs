@@ -7,7 +7,7 @@ namespace Hillinworks.WorkflowFramework
 	{
 		private sealed class ProductConsumer : ProcedureNode
 		{
-			public ProductConsumer(Type procedureType) : base(procedureType)
+			public ProductConsumer(Func<Procedure> procedureFactory) : base(procedureFactory)
 			{
 			}
 

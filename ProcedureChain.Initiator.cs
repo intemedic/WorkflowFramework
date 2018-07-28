@@ -8,7 +8,7 @@ namespace Hillinworks.WorkflowFramework
         
 		private sealed class Initiator : ProcedureNode
 		{
-			public Initiator(Type procedureType) : base(procedureType)
+			public Initiator(Func<Procedure> procedureFactory) : base(procedureFactory)
 			{
 			}
 			

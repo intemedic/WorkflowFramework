@@ -14,7 +14,8 @@ namespace Hillinworks.WorkflowFramework
             private int ProcedureChainLength => this.ProcedureChain.Nodes.Count;
 #endif
 
-            public ForEach(ProcedureChain procedureChain) : base(typeof(WrapperProcedure))
+            public ForEach(ProcedureChain procedureChain) 
+				: base(null) // we will create the procedure by ourselves
             {
                 this.ProcedureChain = procedureChain;
             }

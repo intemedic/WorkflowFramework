@@ -16,14 +16,27 @@ namespace Hillinworks.WorkflowFramework
 			public IWorkflowBuilder AddSuccessor<TProcedure>()
 				where TProcedure : Procedure, new()
 			{
-				this.ProcedureChain.AddSuccessor<TProcedure>();
+				return this.AddSuccessor(() => new TProcedure());
+			}
+
+			public IWorkflowBuilder AddSuccessor<TProcedure>(Func<TProcedure> procedureFactory)
+				where TProcedure : Procedure
+			{
+				this.ProcedureChain.AddSuccessor(procedureFactory);
 				return new Builder(this.ProcedureChain);
+
 			}
 
 			public IWorkflowBuilder<TOutput> AddSuccessor<TProcedure, TOutput>()
 				where TProcedure : Procedure, IProcedureOutput<TOutput>, new()
 			{
-				this.ProcedureChain.AddSuccessor<TProcedure, TOutput>();
+				return this.AddSuccessor<TProcedure, TOutput>(() => new TProcedure());
+			}
+
+			public IWorkflowBuilder<TOutput> AddSuccessor<TProcedure, TOutput>(Func<TProcedure> procedureFactory)
+				where TProcedure : Procedure, IProcedureOutput<TOutput>
+			{
+				this.ProcedureChain.AddSuccessor(procedureFactory);
 				return new Builder<TOutput>(this.ProcedureChain);
 			}
 		}
@@ -39,26 +52,42 @@ namespace Hillinworks.WorkflowFramework
 			{
 			}
 
-			public IWorkflowBuilder AddProductConsumer<TProcedure>() 
+			public IWorkflowBuilder AddProductConsumer<TProcedure>()
 				where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, new()
 			{
-				this.ProcedureChain.AddProductConsumer<TProcedure, TPredecessorProduct>();
+				return this.AddProductConsumer(() => new TProcedure());
+			}
+
+			public IWorkflowBuilder AddProductConsumer<TProcedure>(Func<TProcedure> procedureFactory)
+				where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>
+			{
+				this.ProcedureChain.AddProductConsumer<TProcedure, TPredecessorProduct>(procedureFactory);
 				return new Builder(this.ProcedureChain);
 			}
 
 			public IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>()
 				where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, IProcedureOutput<TOutput>, new()
 			{
-				this.ProcedureChain.AddProductConsumer<TProcedure, TPredecessorProduct, TOutput>();
+				return this.AddProductConsumer<TProcedure, TOutput>(() => new TProcedure());
+			}
+
+			public IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>(Func<TProcedure> procedureFactory) where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, IProcedureOutput<TOutput>
+			{
+				this.ProcedureChain.AddProductConsumer<TProcedure, TPredecessorProduct, TOutput>(procedureFactory);
 				return new Builder<TOutput>(this.ProcedureChain);
 			}
 
-			public IWorkflowBuilderForEach<IWorkflowBuilder<TPredecessorProduct>, TPredecessorProduct> BeginForEach()
+			public IWorkflowBuilder<TProduct> AddSubworkflow<TProduct>(Func<IWorkflowBuilder<TPredecessorProduct>, IWorkflowBuilder<TProduct>> build)
 			{
-				this.ProcedureChain.BeginForEach();
-				return new BuilderForEach<IWorkflowBuilder<TPredecessorProduct>, TPredecessorProduct>(
-					this.ProcedureChain, () => this);
+
+				var subchain = this.ProcedureChain.CreateSubchain();
+				var subchainBuilder = new Builder<TPredecessorProduct>(subchain);
+				build(subchainBuilder);
+				this.ProcedureChain.AddSubworkflow(subchain);
+
+				return new Builder<TProduct>(this.ProcedureChain);
 			}
+			
 		}
 
 	}

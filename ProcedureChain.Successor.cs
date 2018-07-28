@@ -6,7 +6,7 @@ namespace Hillinworks.WorkflowFramework
 	{
 		private sealed class Successor : ProcedureNode
 		{
-			public Successor(Type procedureType) : base(procedureType)
+			public Successor(Func<Procedure> procedureFactory) : base(procedureFactory)
 			{
 			}
 
@@ -18,7 +18,6 @@ namespace Hillinworks.WorkflowFramework
 				  };
 			}
 		}
-
 
 
 	}
