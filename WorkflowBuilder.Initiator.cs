@@ -1,44 +1,43 @@
-﻿using System;
-
-namespace Hillinworks.WorkflowFramework
+﻿namespace Hillinworks.WorkflowFramework
 {
 	internal static partial class WorkflowBuilder
 	{
 		public class Initiator : IWorkflowInitiator
 		{
-			public ProcedureChain ProcedureChain { get; }
-
 			public Initiator(Workflow workflow)
 			{
-				this.ProcedureChain = new ProcedureChain(workflow);
+				this.Workflow = workflow;
 			}
+
+			private Workflow Workflow { get; }
 
 			public IWorkflowBuilder StartWith<TProcedure>()
 				where TProcedure : Procedure, new()
 			{
-				return this.StartWith(() => new TProcedure());
+				return this.StartWith(new TProcedure());
 			}
 
-			public IWorkflowBuilder StartWith<TProcedure>(Func<TProcedure> procedureFactory)
+			public IWorkflowBuilder StartWith<TProcedure>(TProcedure procedure)
 				where TProcedure : Procedure
 			{
-				this.ProcedureChain.AddInitiator(procedureFactory);
-				return new Builder(this.ProcedureChain);
+				var node = new ProcedureTreeNode(procedure, null, null);
+				this.Workflow.ProcedureTree = node;
+				return new Builder(node);
 			}
 
 			public IWorkflowBuilder<TOutput> StartWith<TProcedure, TOutput>()
 				where TProcedure : Procedure, IProcedureOutput<TOutput>, new()
 			{
-				return this.StartWith<TProcedure, TOutput>(() => new TProcedure());
+				return this.StartWith<TProcedure, TOutput>(new TProcedure());
 			}
 
-			public IWorkflowBuilder<TOutput> StartWith<TProcedure, TOutput>(Func<TProcedure> procedureFactory)
+			public IWorkflowBuilder<TOutput> StartWith<TProcedure, TOutput>(TProcedure procedure)
 				where TProcedure : Procedure, IProcedureOutput<TOutput>
 			{
-				this.ProcedureChain.AddInitiator<TProcedure, TOutput>(procedureFactory);
-				return new Builder<TOutput>(this.ProcedureChain);
+				var node = new ProcedureTreeNode(procedure, null, typeof(TOutput));
+				this.Workflow.ProcedureTree = node;
+				return new Builder<TOutput>(node);
 			}
 		}
-
 	}
 }

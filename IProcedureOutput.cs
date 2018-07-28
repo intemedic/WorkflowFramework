@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Hillinworks.WorkflowFramework
+﻿namespace Hillinworks.WorkflowFramework
 {
 	public interface IProcedureOutput<out TOutput>
 	{

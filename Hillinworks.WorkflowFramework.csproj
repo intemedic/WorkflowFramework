@@ -41,19 +41,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IPredecessorComplete.cs" />
-    <Compile Include="IProcedureInput.cs" />
+    <Compile Include="IProductConsumerStartTime.cs" />
     <Compile Include="IProcedureOutput.cs" />
     <Compile Include="IWorkflowBuilder.cs" />
     <Compile Include="IWorkflowInitiator.cs" />
     <Compile Include="Procedure.cs" />
-    <Compile Include="ProcedureChain.ForEach.WrapperProcedure.cs" />
-    <Compile Include="ProcedureChain.cs" />
-    <Compile Include="ProcedureChain.Initiator.cs" />
-    <Compile Include="ProcedureChain.ForEach.cs" />
-    <Compile Include="ProcedureChain.ForEachProductConsumer.cs" />
-    <Compile Include="ProcedureChain.ProcedureNode.cs" />
-    <Compile Include="ProcedureChain.ProductConsumer.cs" />
-    <Compile Include="ProcedureChain.Successor.cs" />
+    <Compile Include="ProcedureStartTime.cs" />
+    <Compile Include="ProcedureTreeNode.cs" />
     <Compile Include="ProcedureOutputEventHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Workflow.cs" />

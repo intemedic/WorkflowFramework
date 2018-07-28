@@ -1,94 +1,80 @@
-﻿using System;
-
-namespace Hillinworks.WorkflowFramework
+﻿namespace Hillinworks.WorkflowFramework
 {
 	internal static partial class WorkflowBuilder
 	{
 		public class Builder : IWorkflowBuilder
 		{
-			public Builder(ProcedureChain procedureChain)
+			public Builder(ProcedureTreeNode node)
 			{
-				this.ProcedureChain = procedureChain;
+				this.Node = node;
 			}
 
-			public ProcedureChain ProcedureChain { get; }
+			public ProcedureTreeNode Node { get; }
 
 			public IWorkflowBuilder AddSuccessor<TProcedure>()
 				where TProcedure : Procedure, new()
 			{
-				return this.AddSuccessor(() => new TProcedure());
+				return this.AddSuccessor(new TProcedure());
 			}
 
-			public IWorkflowBuilder AddSuccessor<TProcedure>(Func<TProcedure> procedureFactory)
+			public IWorkflowBuilder AddSuccessor<TProcedure>(TProcedure procedure)
 				where TProcedure : Procedure
 			{
-				this.ProcedureChain.AddSuccessor(procedureFactory);
-				return new Builder(this.ProcedureChain);
-
+				var successorNode = new ProcedureTreeNode(procedure, null, null);
+				this.Node.AddSuccessor(successorNode);
+				return new Builder(successorNode);
 			}
 
 			public IWorkflowBuilder<TOutput> AddSuccessor<TProcedure, TOutput>()
 				where TProcedure : Procedure, IProcedureOutput<TOutput>, new()
 			{
-				return this.AddSuccessor<TProcedure, TOutput>(() => new TProcedure());
+				return this.AddSuccessor<TProcedure, TOutput>(new TProcedure());
 			}
 
-			public IWorkflowBuilder<TOutput> AddSuccessor<TProcedure, TOutput>(Func<TProcedure> procedureFactory)
+			public IWorkflowBuilder<TOutput> AddSuccessor<TProcedure, TOutput>(TProcedure procedure)
 				where TProcedure : Procedure, IProcedureOutput<TOutput>
 			{
-				this.ProcedureChain.AddSuccessor(procedureFactory);
-				return new Builder<TOutput>(this.ProcedureChain);
+				var successorNode = new ProcedureTreeNode(procedure, null, typeof(TOutput));
+				this.Node.AddSuccessor(successorNode);
+				return new Builder<TOutput>(successorNode);
 			}
 		}
 
-	}
 
-	internal partial class WorkflowBuilder
-	{
 		public class Builder<TPredecessorProduct> : Builder, IWorkflowBuilder<TPredecessorProduct>
 		{
-			public Builder(ProcedureChain procedureChain)
-				: base(procedureChain)
+			public Builder(ProcedureTreeNode node)
+				: base(node)
 			{
 			}
 
 			public IWorkflowBuilder AddProductConsumer<TProcedure>()
 				where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, new()
 			{
-				return this.AddProductConsumer(() => new TProcedure());
+				return this.AddProductConsumer(new TProcedure());
 			}
 
-			public IWorkflowBuilder AddProductConsumer<TProcedure>(Func<TProcedure> procedureFactory)
+			public IWorkflowBuilder AddProductConsumer<TProcedure>(TProcedure procedure)
 				where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>
 			{
-				this.ProcedureChain.AddProductConsumer<TProcedure, TPredecessorProduct>(procedureFactory);
-				return new Builder(this.ProcedureChain);
+				var productConsumeNode = new ProcedureTreeNode(procedure, typeof(TPredecessorProduct), null);
+				this.Node.AddProductConsumer(productConsumeNode);
+				return new Builder(productConsumeNode);
 			}
 
 			public IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>()
 				where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, IProcedureOutput<TOutput>, new()
 			{
-				return this.AddProductConsumer<TProcedure, TOutput>(() => new TProcedure());
+				return this.AddProductConsumer<TProcedure, TOutput>(new TProcedure());
 			}
 
-			public IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>(Func<TProcedure> procedureFactory) where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, IProcedureOutput<TOutput>
+			public IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>(TProcedure procedure)
+				where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, IProcedureOutput<TOutput>
 			{
-				this.ProcedureChain.AddProductConsumer<TProcedure, TPredecessorProduct, TOutput>(procedureFactory);
-				return new Builder<TOutput>(this.ProcedureChain);
+				var productConsumeNode = new ProcedureTreeNode(procedure, typeof(TPredecessorProduct), typeof(TOutput));
+				this.Node.AddProductConsumer(productConsumeNode);
+				return new Builder<TOutput>(productConsumeNode);
 			}
-
-			public IWorkflowBuilder<TProduct> AddSubworkflow<TProduct>(Func<IWorkflowBuilder<TPredecessorProduct>, IWorkflowBuilder<TProduct>> build)
-			{
-
-				var subchain = this.ProcedureChain.CreateSubchain();
-				var subchainBuilder = new Builder<TPredecessorProduct>(subchain);
-				build(subchainBuilder);
-				this.ProcedureChain.AddSubworkflow(subchain);
-
-				return new Builder<TProduct>(this.ProcedureChain);
-			}
-			
 		}
-
 	}
 }

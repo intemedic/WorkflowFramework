@@ -4,55 +4,69 @@ using System.Threading;
 
 namespace Hillinworks.WorkflowFramework
 {
-    public abstract class Procedure
-    {
-        public bool IsCompleted { get; private set; }
+	public abstract class Procedure
+	{
+		private Workflow _workflow;
+		public bool IsCompleted { get; private set; }
 
-        public Workflow Workflow { get; private set; }
-        public Procedure Predecessor { get; private set; }
-        protected internal CancellationToken CancellationToken => this.Workflow.CancellationTokenSource.Token;
-        public event EventHandler Completed;
+		public Workflow Workflow
+		{
+			get => _workflow;
+			internal set
+			{
+				if (_workflow != null)
+				{
+					throw new InvalidOperationException("workflow has been set already");
+				}
 
-        internal virtual void InternalInitialize(Workflow workflow, Procedure predecessor)
-        {
-            this.Workflow = workflow;
-            this.Predecessor = predecessor;
-            this.CancellationToken.Register(this.OnCancelled);
-        }
+				_workflow = value;
+				this.CancellationToken.Register(this.OnCancelled);
+			}
+		}
 
+		internal bool IsStarted { get; private set; }
 
-        protected internal virtual void Initialize()
-        {
-        }
+		public Procedure Predecessor { get; internal set; }
+		protected internal CancellationToken CancellationToken => this.Workflow.CancellationTokenSource.Token;
+		public event EventHandler Completed;
 
-        protected internal virtual void Start()
-        {
-        }
+		protected internal virtual void Initialize()
+		{
+		}
 
-        /// <summary>
-        ///     Invoke <see cref="IProcedureInput{TInput}.ProcessInput(TInput)" /> on this procedure with reflection, asserting
-        ///     this procedure implements <see cref="IProcedureInput{TInput}" />.
-        /// </summary>
-        internal void InvokeProcessInput(object input)
-        {
-            var processInputMethod = typeof(IProcedureInput<>).MakeGenericType(input.GetType())
-                .GetMethod(nameof(IProcedureInput<object>.ProcessInput));
+		internal void InternalStart()
+		{
+			this.IsStarted = true;
+			this.Start();
+		}
 
-            Debug.Assert(processInputMethod != null);
+		protected virtual void Start()
+		{
+		}
 
-            processInputMethod.Invoke(this, new[] {input});
-        }
+		/// <summary>
+		///     Invoke <see cref="IProcedureInput{TInput}.ProcessInput(TInput)" /> on this procedure with reflection, asserting
+		///     this procedure implements <see cref="IProcedureInput{TInput}" />.
+		/// </summary>
+		internal void InvokeProcessInput(object input)
+		{
+			var processInputMethod = typeof(IProcedureInput<>).MakeGenericType(input.GetType())
+				.GetMethod(nameof(IProcedureInput<object>.ProcessInput));
 
-        protected virtual void OnCancelled()
-        {
-        }
+			Debug.Assert(processInputMethod != null);
 
-        protected virtual void OnCompleted()
-        {
-	        Debug.Assert(!this.IsCompleted);
-            this.IsCompleted = true;
-            this.Completed?.Invoke(this, EventArgs.Empty);
-        }
+			processInputMethod.Invoke(this, new[] {input});
+		}
 
-    }
+		protected virtual void OnCancelled()
+		{
+		}
+
+		protected virtual void OnCompleted()
+		{
+			Debug.Assert(!this.IsCompleted);
+			this.IsCompleted = true;
+			this.Completed?.Invoke(this, EventArgs.Empty);
+		}
+	}
 }

@@ -1,25 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Hillinworks.WorkflowFramework
+﻿namespace Hillinworks.WorkflowFramework
 {
-
 	public interface IWorkflowBuilder
 	{
 		IWorkflowBuilder AddSuccessor<TProcedure>()
 			where TProcedure : Procedure, new();
 
-		IWorkflowBuilder AddSuccessor<TProcedure>(Func<TProcedure> procedureFactory)
+		IWorkflowBuilder AddSuccessor<TProcedure>(TProcedure procedure)
 			where TProcedure : Procedure;
 
 
 		IWorkflowBuilder<TOutput> AddSuccessor<TProcedure, TOutput>()
 			where TProcedure : Procedure, IProcedureOutput<TOutput>, new();
 
-		IWorkflowBuilder<TOutput> AddSuccessor<TProcedure, TOutput>(Func<TProcedure> procedureFactory)
+		IWorkflowBuilder<TOutput> AddSuccessor<TProcedure, TOutput>(TProcedure procedure)
 			where TProcedure : Procedure, IProcedureOutput<TOutput>;
 	}
 
@@ -28,18 +21,13 @@ namespace Hillinworks.WorkflowFramework
 		IWorkflowBuilder AddProductConsumer<TProcedure>()
 			where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, new();
 
-		IWorkflowBuilder AddProductConsumer<TProcedure>(Func<TProcedure> procedureFactory)
+		IWorkflowBuilder AddProductConsumer<TProcedure>(TProcedure procedure)
 			where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>;
 
 		IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>()
 			where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, IProcedureOutput<TOutput>, new();
 
-		IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>(Func<TProcedure> procedureFactory)
+		IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>(TProcedure procedure)
 			where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, IProcedureOutput<TOutput>;
-		
-		IWorkflowBuilder<TProduct> AddSubworkflow<TProduct>(
-			Func<IWorkflowBuilder<TPredecessorProduct>, IWorkflowBuilder<TProduct>> build);
 	}
-
-
 }

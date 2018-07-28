@@ -1,59 +1,61 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Hillinworks.WorkflowFramework
 {
-    public abstract class Workflow
-    {
-        public WorkflowStatus Status { get; private set; } = WorkflowStatus.NotStarted;
+	public abstract class Workflow
+	{
+		public WorkflowStatus Status { get; private set; } = WorkflowStatus.NotStarted;
 
-        internal CancellationTokenSource CancellationTokenSource { get; private set; }
+		internal CancellationTokenSource CancellationTokenSource { get; private set; }
 
-        public void Start()
-        {
-            if (this.Status != WorkflowStatus.NotStarted)
-            {
-                throw new InvalidOperationException(
-                    $"cannot start a workflow which is not in {nameof(WorkflowStatus.NotStarted)} state");
-            }
+		internal ProcedureTreeNode ProcedureTree { get; set; }
 
-            var builder = new WorkflowBuilder.Initiator(this);
-            this.Build(builder);
+		public void Start()
+		{
+			if (this.Status != WorkflowStatus.NotStarted)
+			{
+				throw new InvalidOperationException(
+					$"cannot start a workflow which is not in {nameof(WorkflowStatus.NotStarted)} state");
+			}
 
-            builder.ProcedureChain.Close();
+			var builder = new WorkflowBuilder.Initiator(this);
+			this.Build(builder);
 
-            this.CancellationTokenSource = new CancellationTokenSource();
+			if (this.ProcedureTree == null)
+			{
+				throw new InvalidOperationException("cannot start an empty workflow");
+			}
 
-            var procedures = builder.ProcedureChain.Initialize();
-            Debug.Assert(procedures.Length > 0);
+			this.ProcedureTree.Completed += this.ProcedureTree_Completed;
 
-            procedures[procedures.Length - 1].Completed += (sender, e) =>
-            {
-                Debug.Assert(this.Status == WorkflowStatus.Running);
-                this.Status = WorkflowStatus.Ended;
-            };
+			this.CancellationTokenSource = new CancellationTokenSource();
 
-            this.Status = WorkflowStatus.Running;
+			this.ProcedureTree.Initialize();
 
-            procedures[0].Start();
-        }
+			this.Status = WorkflowStatus.Running;
 
-        public void Cancel(bool throwOnFirstException = true)
-        {
-            if (this.Status != WorkflowStatus.Running)
-            {
-                throw new InvalidOperationException(
-                   $"cannot cancel a workflow which is not in {nameof(WorkflowStatus.Running)} state");
-            }
+			this.ProcedureTree.Start();
+		}
 
-            this.CancellationTokenSource.Cancel(throwOnFirstException);
-        }
+		private void ProcedureTree_Completed(object sender, EventArgs e)
+		{
+			Debug.Assert(this.Status == WorkflowStatus.Running);
+			this.Status = WorkflowStatus.Ended;
+		}
 
-        protected abstract void Build(IWorkflowInitiator builder);
-    }
+		public void Cancel(bool throwOnFirstException = true)
+		{
+			if (this.Status != WorkflowStatus.Running)
+			{
+				throw new InvalidOperationException(
+					$"cannot cancel a workflow which is not in {nameof(WorkflowStatus.Running)} state");
+			}
+
+			this.CancellationTokenSource.Cancel(throwOnFirstException);
+		}
+
+		protected abstract void Build(IWorkflowInitiator builder);
+	}
 }
