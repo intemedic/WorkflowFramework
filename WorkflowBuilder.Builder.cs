@@ -86,6 +86,7 @@
 				this.Node.AddProductConsumer(productConsumeNode);
 				return new Builder<TOutput>(productConsumeNode);
 			}
+
 		}
 	}
 }
