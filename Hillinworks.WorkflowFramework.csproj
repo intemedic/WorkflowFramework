@@ -40,7 +40,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InputConcurrentStrategy.cs" />
     <Compile Include="IPredecessorComplete.cs" />
+    <Compile Include="IProcedureInput.cs" />
+    <Compile Include="IProcedureOutputProductCount.cs" />
+    <Compile Include="IProductConsumerInputConcurrentStrategy.cs" />
     <Compile Include="IProductConsumerStartTime.cs" />
     <Compile Include="IProcedureOutput.cs" />
     <Compile Include="IWorkflowBuilder.cs" />

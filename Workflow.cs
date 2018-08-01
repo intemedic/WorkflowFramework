@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
@@ -13,33 +14,38 @@ namespace Hillinworks.WorkflowFramework
 		internal ProcedureTreeNode ProcedureTree { get; set; }
 
 		public void Start()
-		{
-			if (this.Status != WorkflowStatus.NotStarted)
-			{
-				throw new InvalidOperationException(
-					$"cannot start a workflow which is not in {nameof(WorkflowStatus.NotStarted)} state");
-			}
+        {
+            if (this.Status != WorkflowStatus.NotStarted)
+            {
+                throw new InvalidOperationException(
+                    $"cannot start a workflow which is not in {nameof(WorkflowStatus.NotStarted)} state");
+            }
 
-			var builder = new WorkflowBuilder.Initiator(this);
-			this.Build(builder);
+            var builder = new WorkflowBuilder.Initiator(this);
+            this.Build(builder);
 
-			if (this.ProcedureTree == null)
-			{
-				throw new InvalidOperationException("cannot start an empty workflow");
-			}
+            if (this.ProcedureTree == null)
+            {
+                throw new InvalidOperationException("cannot start an empty workflow");
+            }
 
-			this.ProcedureTree.Completed += this.ProcedureTree_Completed;
+            this.ProcedureTree.Completed += this.ProcedureTree_Completed;
 
-			this.CancellationTokenSource = new CancellationTokenSource();
+            this.CancellationTokenSource = new CancellationTokenSource();
 
-			this.ProcedureTree.Initialize();
+            this.Initialize();
+            this.ProcedureTree.Initialize(this);
 
-			this.Status = WorkflowStatus.Running;
+            this.Status = WorkflowStatus.Running;
 
-			this.ProcedureTree.Start();
-		}
+            this.ProcedureTree.Start();
+        }
 
-		private void ProcedureTree_Completed(object sender, EventArgs e)
+        protected virtual void Initialize()
+	    {
+	    }
+
+	    private void ProcedureTree_Completed(object sender, EventArgs e)
 		{
 			Debug.Assert(this.Status == WorkflowStatus.Running);
 			this.Status = WorkflowStatus.Ended;
@@ -57,5 +63,10 @@ namespace Hillinworks.WorkflowFramework
 		}
 
 		protected abstract void Build(IWorkflowInitiator builder);
+
+	    protected IEnumerable<Procedure> EnumerateProcedures()
+	    {
+	        return this.ProcedureTree.EnumerateProcedures();
+	    }
 	}
 }
