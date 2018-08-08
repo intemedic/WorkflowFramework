@@ -13,6 +13,11 @@ namespace Hillinworks.WorkflowFramework
 
 		internal ProcedureTreeNode ProcedureTree { get; set; }
 
+	    protected virtual void OnCompleted()
+	    {
+
+	    }
+
 		public void Start()
         {
             if (this.Status != WorkflowStatus.NotStarted)
@@ -49,6 +54,7 @@ namespace Hillinworks.WorkflowFramework
 		{
 			Debug.Assert(this.Status == WorkflowStatus.Running);
 			this.Status = WorkflowStatus.Ended;
+		    this.OnCompleted();
 		}
 
 		public void Cancel(bool throwOnFirstException = true)
