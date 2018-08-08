@@ -46,7 +46,7 @@ namespace Hillinworks.WorkflowFramework
             }
             else if (this.Procedure is IProductConsumerStartTime startTimeInterface)
             {
-                if (startTimeInterface.StartTime == ProcedureStartTime.WhenWorkflowStarts)
+                if (startTimeInterface.StartInvokeTime == ProcedureStartTime.WhenWorkflowStarts)
                 {
                     this.Procedure.InternalStart();
                 }
@@ -66,22 +66,16 @@ namespace Hillinworks.WorkflowFramework
                 var startTimeInterface = (IProductConsumerStartTime)consumer.Procedure;
                 var inputConcurrentStrategyInterface = (IProductConsumerInputConcurrentStrategy)consumer.Procedure;
 
-                if (startTimeInterface.StartTime == ProcedureStartTime.OnFirstInput && !consumer.Procedure.IsStarted)
+                if (startTimeInterface.StartInvokeTime == ProcedureStartTime.OnFirstInput && !consumer.Procedure.IsStarted)
                 {
-                    if (inputConcurrentStrategyInterface.InputConcurrentStrategy == InputConcurrentStrategy.Parallel)
+                    lock (consumer.Procedure)
                     {
                         consumer.Procedure.InternalStart();
                     }
-                    else
-                    {
-                        lock (consumer.Procedure)
-                        {
-                            consumer.Procedure.InternalStart();
-                        }
-                    }
                 }
 
-                if (inputConcurrentStrategyInterface.InputConcurrentStrategy == InputConcurrentStrategy.Parallel)
+                if (inputConcurrentStrategyInterface.InputConcurrentStrategy == InputConcurrentStrategy.Parallel
+                    && consumer.Procedure.IsStarted)
                 {
                     consumer.Procedure.InvokeProcessInput(output);
                 }
