@@ -9,6 +9,9 @@ namespace Hillinworks.WorkflowFramework
         private Workflow _workflow;
         public bool IsCompleted { get; private set; }
 
+        protected virtual TimeSpan Timeout { get; } = TimeSpan.FromMinutes(1);
+        private Timer TimeoutTimer { get; }
+
         public Workflow Workflow
         {
             get => _workflow;
@@ -32,6 +35,16 @@ namespace Hillinworks.WorkflowFramework
 
         public event EventHandler Completed;
 
+        protected Procedure()
+        {
+            this.TimeoutTimer = new Timer(this.OnTimeout);
+        }
+
+        private void OnTimeout(object state)
+        {
+            throw new TimeoutException("procedure timed out");
+        }
+
         internal void InteralInitialize(Workflow workflow)
         {
             this.Workflow = workflow;
@@ -47,8 +60,14 @@ namespace Hillinworks.WorkflowFramework
             this.Start();
         }
 
+        protected void ResetTimeout()
+        {
+            this.TimeoutTimer.Change(this.Timeout, System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
         protected virtual void Start()
         {
+            this.ResetTimeout();
         }
 
         /// <summary>
@@ -80,6 +99,7 @@ namespace Hillinworks.WorkflowFramework
 
         protected virtual void CleanUp()
         {
+            this.TimeoutTimer.Dispose();
         }
 
         public int GetTotalProductCount()
