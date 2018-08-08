@@ -2,6 +2,6 @@
 {
     public interface IProductConsumerStartTime
 	{
-		ProcedureStartTime StartTime { get; }
+		ProcedureStartTime StartInvokeTime { get; }
 	}
 }
