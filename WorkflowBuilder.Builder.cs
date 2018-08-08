@@ -1,4 +1,6 @@
-﻿namespace Hillinworks.WorkflowFramework
+﻿using System;
+
+namespace Hillinworks.WorkflowFramework
 {
     internal static partial class WorkflowBuilder
     {
@@ -52,6 +54,7 @@
                 this.Node.AddSuccessor(successorNode);
                 return new Builder<TOutput>(successorNode, this.Context);
             }
+            
         }
 
 

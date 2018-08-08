@@ -42,7 +42,11 @@ namespace Hillinworks.WorkflowFramework
 
         private void OnTimeout(object state)
         {
+#if DEBUG
+            Debug.Assert(false, "procedure timed out");
+#else
             throw new TimeoutException("procedure timed out");
+#endif
         }
 
         internal void InteralInitialize(Workflow workflow)
@@ -50,14 +54,15 @@ namespace Hillinworks.WorkflowFramework
             this.Workflow = workflow;
             this.Initialize();
         }
+
         protected virtual void Initialize()
         {
         }
 
         internal void InternalStart()
         {
-            this.IsStarted = true;
             this.Start();
+            this.IsStarted = true;
         }
 
         protected void ResetTimeout()
@@ -87,6 +92,16 @@ namespace Hillinworks.WorkflowFramework
         protected virtual void OnCancelled()
         {
             this.CleanUp();
+        }
+
+        protected void TryTriggerOnCompleted()
+        {
+            if (this.IsCompleted)
+            {
+                return;
+            }
+
+            this.OnCompleted();
         }
 
         protected virtual void OnCompleted()
