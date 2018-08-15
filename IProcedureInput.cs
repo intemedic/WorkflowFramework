@@ -1,8 +1,13 @@
-﻿namespace Hillinworks.WorkflowFramework
+﻿using System.Threading;
+using System.Threading.Tasks;
+
+namespace Hillinworks.WorkflowFramework
 {
-    public interface IProcedureInput<in TInput> : IProductConsumerStartTime, IProductConsumerInputConcurrentStrategy
+
+    public interface IProcedureInput<in TInput>
+        : IProductConsumerInputConcurrentStrategy
     {
-		void ProcessInput(TInput input);
-	    
+        Task ProcessInputAsync(TInput input, CancellationToken cancellationToken);
+
     }
 }

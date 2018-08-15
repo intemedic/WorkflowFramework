@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Hillinworks.WorkflowFramework</RootNamespace>
     <AssemblyName>Hillinworks.WorkflowFramework</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -41,15 +42,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="InputConcurrentStrategy.cs" />
-    <Compile Include="IPredecessorComplete.cs" />
     <Compile Include="IProcedureInput.cs" />
+    <Compile Include="IProcedureInputProcessor.cs" />
     <Compile Include="IProcedureOutputProductCount.cs" />
     <Compile Include="IProductConsumerInputConcurrentStrategy.cs" />
-    <Compile Include="IProductConsumerStartTime.cs" />
     <Compile Include="IProcedureOutput.cs" />
     <Compile Include="IWorkflowBuilder.cs" />
     <Compile Include="IWorkflowInitiator.cs" />
+    <Compile Include="ParallelProcedureInputProcessor.cs" />
     <Compile Include="Procedure.cs" />
+    <Compile Include="ProcedureInputProcessor.cs" />
+    <Compile Include="SequentialProcedureInputProcessor.cs" />
     <Compile Include="ProcedureStartTime.cs" />
     <Compile Include="ProcedureTreeNode.cs" />
     <Compile Include="ProcedureOutputEventHandler.cs" />
@@ -58,6 +61,12 @@
     <Compile Include="WorkflowBuilder.Builder.cs" />
     <Compile Include="WorkflowBuilder.Initiator.cs" />
     <Compile Include="WorkflowStatus.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\tronmedi\Tromedi.Production\Tronmedi.Collections\Tronmedi.Collections.csproj">
+      <Project>{5A955E5B-D3D6-4B17-8D61-8D6E6771E4A1}</Project>
+      <Name>Tronmedi.Collections</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

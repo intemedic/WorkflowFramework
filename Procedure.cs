@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Hillinworks.WorkflowFramework
 {
@@ -26,12 +27,13 @@ namespace Hillinworks.WorkflowFramework
                 this.CancellationToken.Register(this.OnCancelled);
             }
         }
-
-        internal bool IsStarted { get; private set; }
-
+        
         public Procedure Predecessor { get; internal set; }
         protected internal CancellationToken CancellationToken => this.Workflow.CancellationTokenSource.Token;
         public object Context { get; internal set; }
+        public Task ExecutionTask { get; internal set; }
+
+        internal IProcedureInputProcessor InputProcessor { get; set; }
 
         public event EventHandler Completed;
 
@@ -59,10 +61,40 @@ namespace Hillinworks.WorkflowFramework
         {
         }
 
-        internal void InternalStart()
+        internal async Task InternalExecuteAsync(CancellationToken cancellationToken)
         {
-            this.Start();
-            this.IsStarted = true;
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            await this.ExecuteAsync(cancellationToken);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (this.InputProcessor != null)
+            {
+                // start input processor only after ExecuteAsync is done, to
+                // ensure initialization works are done
+                await this.InputProcessor.StartAsync(cancellationToken);
+            }
+
+            if (this.Predecessor != null)
+            {
+                // wait until predecessor is finished
+                await this.Predecessor.ExecutionTask;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (this.InputProcessor != null)
+            {
+                // wait until all input handling tasks are finished
+                await this.InputProcessor.FinishAsync(cancellationToken);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            await this.FinishAsync(cancellationToken);
+
+            this.OnCompleted();
         }
 
         protected void ResetTimeout()
@@ -70,43 +102,56 @@ namespace Hillinworks.WorkflowFramework
             this.TimeoutTimer.Change(this.Timeout, System.Threading.Timeout.InfiniteTimeSpan);
         }
 
-        protected virtual void Start()
+        protected virtual Task ExecuteAsync(CancellationToken cancellationToken)
         {
             this.ResetTimeout();
+            return Task.CompletedTask;
         }
 
         /// <summary>
-        ///     Invoke <see cref="IProcedureInput{TInput}.ProcessInput(TInput)" /> on this procedure with reflection, asserting
+        ///     Invoke <see cref="IProcedureInput{TInput}.ProcessInputAsync" /> on this procedure with reflection, asserting
         ///     this procedure implements <see cref="IProcedureInput{TInput}" />.
         /// </summary>
-        internal void InvokeProcessInput(object input)
+        internal Task InvokeProcessInputAsync(object input, CancellationToken cancellationToken)
         {
-            var processInputMethod = typeof(IProcedureInput<>).MakeGenericType(input.GetType())
-                .GetMethod(nameof(IProcedureInput<object>.ProcessInput));
+            var processInputMethod = typeof(IProcedureInput<>)
+                .MakeGenericType(input.GetType())
+                .GetMethod(nameof(IProcedureInput<object>.ProcessInputAsync));
 
             Debug.Assert(processInputMethod != null);
 
-            processInputMethod.Invoke(this, new[] { input });
+            return (Task)processInputMethod.Invoke(this, new[] { input, cancellationToken });
         }
 
-        protected virtual void OnCancelled()
+        protected internal virtual void OnCancelled()
         {
             this.CleanUp();
         }
 
-        protected void TryTriggerOnCompleted()
+        protected internal virtual void OnFaulted()
+        {
+            this.CleanUp();
+        }
+
+        protected internal virtual void OnCompleted()
         {
             if (this.IsCompleted)
             {
-                return;
+                throw new InvalidOperationException("this procedure is already completed");
             }
 
-            this.OnCompleted();
-        }
+            if (_productCount != this.GetTotalProductCount())
+            {
+                var message = "this procedure has not yielded enough products "
+                              + $"({_productCount} yielded, {this.GetTotalProductCount()} expected";
 
-        protected virtual void OnCompleted()
-        {
-            Debug.Assert(!this.IsCompleted);
+#if DEBUG
+                Debug.Assert(false, message);
+#else
+                throw new InvalidOperationException(message);
+#endif
+            }
+
             this.CleanUp();
             this.IsCompleted = true;
             this.Completed?.Invoke(this, EventArgs.Empty);
@@ -125,6 +170,18 @@ namespace Hillinworks.WorkflowFramework
             }
 
             return 0;
+        }
+
+        private int _productCount;
+
+        internal void IncrementProductCount()
+        {
+            Interlocked.Increment(ref _productCount);
+        }
+
+        protected internal virtual Task FinishAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
         }
     }
 

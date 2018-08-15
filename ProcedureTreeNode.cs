@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Hillinworks.WorkflowFramework
 {
@@ -12,118 +14,90 @@ namespace Hillinworks.WorkflowFramework
             this.InputType = inputType;
             this.OutputType = outputType;
 
-            this.Procedure.Completed += this.OnProcedureCompleted;
-            if (this.OutputType != null)
+            if (this.Procedure is IProcedureOutput<object> outputInterface)
             {
-                var outputInterface = (IProcedureOutput<object>)this.Procedure;
                 outputInterface.Output += this.OnProcedureOutput;
             }
+
         }
 
         private List<ProcedureTreeNode> Successors { get; } = new List<ProcedureTreeNode>();
 
         private List<ProcedureTreeNode> ProductConsumers { get; } = new List<ProcedureTreeNode>();
 
-        private IEnumerable<ProcedureTreeNode> Children => this.Successors.Union(this.ProductConsumers);
-        private ProcedureTreeNode Parent { get; set; }
+        private List<Task> ProductConsumerExecutionTasks { get; }
+            = new List<Task>();
 
-        private List<IPredecessorComplete> PredecessorCompleteHandlers { get; } = new List<IPredecessorComplete>();
+        private IEnumerable<ProcedureTreeNode> Children => this.Successors.Union(this.ProductConsumers);
 
         public Procedure Procedure { get; }
         public Type InputType { get; }
         public Type OutputType { get; }
 
-        public bool IsCompleted { get; private set; }
+        private bool IsStarted { get; set; }
 
-        public event EventHandler Completed;
+        private CancellationToken CancellationToken { get; set; }
 
-        internal void Start()
+        internal async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            if (this.Parent == null)
-            {
-                // root
-                this.Procedure.InternalStart();
-            }
-            else if (this.Procedure is IProductConsumerStartTime startTimeInterface)
-            {
-                if (startTimeInterface.StartInvokeTime == ProcedureStartTime.WhenWorkflowStarts)
-                {
-                    this.Procedure.InternalStart();
-                }
-            }
+            this.CancellationToken = cancellationToken;
 
+            cancellationToken.ThrowIfCancellationRequested();
 
-            foreach (var child in this.Children)
-            {
-                child.Start();
-            }
+            this.IsStarted = true;
+
+            // wait until our procedure is executed
+            this.Procedure.ExecutionTask = Task.Run(
+                () => this.Procedure.InternalExecuteAsync(cancellationToken),
+                    cancellationToken);
+
+            await this.Procedure.ExecutionTask;
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // execute and wait until all sucessors are completed
+            await Task.WhenAll(
+                this.Successors.Select(
+                    s => Task.Run(() => s.ExecuteAsync(cancellationToken), cancellationToken)));
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // wait until all product consumers are completed
+            await Task.WhenAll(this.ProductConsumerExecutionTasks);
         }
 
         private void OnProcedureOutput(Procedure procedure, object output)
         {
-            foreach (var consumer in this.ProductConsumers)
-            {
-                var startTimeInterface = (IProductConsumerStartTime)consumer.Procedure;
-                var inputConcurrentStrategyInterface = (IProductConsumerInputConcurrentStrategy)consumer.Procedure;
-
-                if (startTimeInterface.StartInvokeTime == ProcedureStartTime.OnFirstInput && !consumer.Procedure.IsStarted)
+            this.Procedure.IncrementProductCount();
+            Parallel.ForEach(this.ProductConsumers,
+                consumer =>
                 {
-                    lock (consumer.Procedure)
+                    lock (consumer)
                     {
-                        consumer.Procedure.InternalStart();
+                        if (!consumer.IsStarted)
+                        {
+                            consumer.Procedure.InputProcessor = ProcedureInputProcessor.Create(
+                                consumer.Procedure,
+                                this.CancellationToken);
+
+                            var task = Task.Run(
+                                () => consumer.ExecuteAsync(this.CancellationToken),
+                                this.CancellationToken);
+
+                            this.ProductConsumerExecutionTasks.Add(task);
+
+                            consumer.IsStarted = true;
+                        }
+
+                        consumer.Procedure.InputProcessor.HandleInput(output);
                     }
-                }
-
-                if (inputConcurrentStrategyInterface.InputConcurrentStrategy == InputConcurrentStrategy.Parallel
-                    && consumer.Procedure.IsStarted)
-                {
-                    consumer.Procedure.InvokeProcessInput(output);
-                }
-                else
-                {
-                    lock (consumer.Procedure)
-                    {
-                        consumer.Procedure.InvokeProcessInput(output);
-                    }
-                }
-            }
-        }
-
-        private void OnProcedureCompleted(object sender, EventArgs e)
-        {
-            foreach (var successor in this.Successors)
-            {
-                successor.Procedure.InternalStart();
-            }
-
-            foreach (var predecessorCompleteHandler in this.PredecessorCompleteHandlers)
-            {
-                predecessorCompleteHandler.OnPredecessorCompleted();
-            }
-
-            this.UpdateCompletion();
-        }
-
-        private void UpdateCompletion()
-        {
-            if (this.Procedure.IsCompleted && this.Children.All(c => c.IsCompleted))
-            {
-                this.IsCompleted = true;
-                this.Completed?.Invoke(this, EventArgs.Empty);
-            }
+                });
         }
 
         public void AddSuccessor(ProcedureTreeNode node)
         {
             node.Procedure.Predecessor = this.Procedure;
             this.Successors.Add(node);
-            node.Parent = this;
-            node.Completed += this.OnChildCompleted;
-        }
-
-        private void OnChildCompleted(object sender, EventArgs e)
-        {
-            this.UpdateCompletion();
         }
 
         public void AddProductConsumer(ProcedureTreeNode node)
@@ -146,13 +120,6 @@ namespace Hillinworks.WorkflowFramework
 
             node.Procedure.Predecessor = this.Procedure;
             this.ProductConsumers.Add(node);
-            node.Parent = this;
-            node.Completed += this.OnChildCompleted;
-
-            if (node.Procedure is IPredecessorComplete predecessorCompleteInterface)
-            {
-                this.PredecessorCompleteHandlers.Add(predecessorCompleteInterface);
-            }
         }
 
         public void Initialize(Workflow workflow)
@@ -174,6 +141,24 @@ namespace Hillinworks.WorkflowFramework
                 {
                     yield return procedure;
                 }
+            }
+        }
+
+        public void OnCancelled()
+        {
+            this.Procedure.OnCancelled();
+            foreach (var child in this.Children)
+            {
+                child.OnCancelled();
+            }
+        }
+
+        public void OnFaulted()
+        {
+            this.Procedure.OnFaulted();
+            foreach (var child in this.Children)
+            {
+                child.OnFaulted();
             }
         }
     }
