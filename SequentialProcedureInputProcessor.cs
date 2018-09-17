@@ -1,11 +1,14 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using slf4net;
 using Tronmedi.Collections;
 
 namespace Hillinworks.WorkflowFramework
 {
     internal class SequentialProcedureInputProcessor : IProcedureInputProcessor
     {
+
+        private static readonly ILogger Logger = LoggerFactory.GetLogger(nameof(SequentialProcedureInputProcessor));
         public SequentialProcedureInputProcessor(Procedure procedure, CancellationToken cancellationToken)
         {
             this.Procedure = procedure;
@@ -25,6 +28,8 @@ namespace Hillinworks.WorkflowFramework
 
         public void HandleInput(object product)
         {
+            Logger.Debug($"{this.Procedure.DebugName}: Enqueuing product: [{product}] ({product.GetHashCode()})");
+
             this.ProductQueue.Enqueue(product);
         }
 
@@ -46,8 +51,11 @@ namespace Hillinworks.WorkflowFramework
                 var product = this.ProductQueue.Dequeue();
                 if (product == null)
                 {
+                    Logger.Debug($"{this.Procedure.DebugName}: Input exhausted");
                     return;
                 }
+
+                Logger.Debug($"{this.Procedure.DebugName}: Processing product: [{product}] ({product.GetHashCode()})");
 
                 cancellationToken.ThrowIfCancellationRequested();
 

@@ -56,6 +56,10 @@ namespace Hillinworks.WorkflowFramework
                 this.Status = WorkflowStatus.Faulted;
                 this.ProcedureTree.OnFaulted();
             }
+            finally
+            {
+                this.CleanUp();
+            }
         }
 
         protected virtual void Initialize()
@@ -78,6 +82,11 @@ namespace Hillinworks.WorkflowFramework
         protected IEnumerable<Procedure> EnumerateProcedures()
         {
             return this.ProcedureTree.EnumerateProcedures();
+        }
+
+        protected virtual void CleanUp()
+        {
+
         }
     }
 }

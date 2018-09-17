@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using slf4net;
 
 namespace Hillinworks.WorkflowFramework
 {
@@ -12,6 +13,11 @@ namespace Hillinworks.WorkflowFramework
 
         protected virtual TimeSpan Timeout { get; } = TimeSpan.FromMinutes(1);
         private Timer TimeoutTimer { get; }
+        private static readonly ILogger Logger = LoggerFactory.GetLogger(nameof(Procedure));
+
+#if DEBUG
+        internal string DebugName => this.GetType().Name;
+#endif
 
         public Workflow Workflow
         {
@@ -45,7 +51,7 @@ namespace Hillinworks.WorkflowFramework
         private void OnTimeout(object state)
         {
 #if DEBUG
-            Debug.Assert(false, "procedure timed out");
+            //Debug.Assert(false, $"procedure {this.DebugName} timed out");
 #else
             throw new TimeoutException("procedure timed out");
 #endif
@@ -53,6 +59,7 @@ namespace Hillinworks.WorkflowFramework
 
         internal void InteralInitialize(Workflow workflow)
         {
+            Logger.Debug($"Initializing procedure {this.DebugName}");
             this.Workflow = workflow;
             this.Initialize();
         }
@@ -65,12 +72,16 @@ namespace Hillinworks.WorkflowFramework
         {
             cancellationToken.ThrowIfCancellationRequested();
             
+            Logger.Debug($"Executing procedure {this.DebugName}");
+
             await this.ExecuteAsync(cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
 
             if (this.InputProcessor != null)
             {
+                Logger.Debug($"Starting input processor of procedure {this.DebugName}");
+
                 // start input processor only after ExecuteAsync is done, to
                 // ensure initialization works are done
                 await this.InputProcessor.StartAsync(cancellationToken);
@@ -86,11 +97,15 @@ namespace Hillinworks.WorkflowFramework
 
             if (this.InputProcessor != null)
             {
+                Logger.Debug($"Finishing input processor of procedure {this.DebugName}");
+
                 // wait until all input handling tasks are finished
                 await this.InputProcessor.FinishAsync(cancellationToken);
             }
 
             cancellationToken.ThrowIfCancellationRequested();
+
+            Logger.Debug($"Finishing procedure {this.DebugName}");
 
             await this.FinishAsync(cancellationToken);
 
@@ -151,6 +166,8 @@ namespace Hillinworks.WorkflowFramework
                 throw new InvalidOperationException(message);
 #endif
             }
+
+            Logger.Debug($"Procedure {this.DebugName} has completed successfully");
 
             this.CleanUp();
             this.IsCompleted = true;
