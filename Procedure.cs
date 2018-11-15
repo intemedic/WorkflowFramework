@@ -148,7 +148,7 @@ namespace Hillinworks.WorkflowFramework
             this.CleanUp();
         }
 
-        protected internal virtual void OnCompleted()
+        protected virtual void OnCompleted()
         {
             if (this.IsCompleted)
             {
