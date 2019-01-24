@@ -63,6 +63,7 @@
     <Compile Include="ProcedureTreeNode.cs" />
     <Compile Include="ProcedureOutputEventHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utilities\ExceptionExtension.cs" />
     <Compile Include="Workflow.cs" />
     <Compile Include="WorkflowBuilder.Builder.cs" />
     <Compile Include="WorkflowBuilder.Initiator.cs" />

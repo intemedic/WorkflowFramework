@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using slf4net;
 
 namespace Hillinworks.WorkflowFramework
 {
     internal class ProcedureTreeNode
     {
+        private static readonly ILogger Logger = LoggerFactory.GetLogger(nameof(ProcedureTreeNode));
+
+
         public ProcedureTreeNode(Procedure procedure, Type inputType, Type outputType)
         {
             this.Procedure = procedure;
@@ -51,11 +55,19 @@ namespace Hillinworks.WorkflowFramework
                 () => this.Procedure.InternalExecuteAsync(cancellationToken),
                     cancellationToken);
 
-            await this.Procedure.ExecutionTask;
+            try
+            {
+                await this.Procedure.ExecutionTask;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error when executing procedure {this.Procedure.GetType().Name}: {ex.FormatMessage()}");
+                throw;
+            }
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            // execute and wait until all sucessors are completed
+            // execute and wait until all successors are completed
             await Task.WhenAll(
                 this.Successors.Select(
                     s => Task.Run(() => s.ExecuteAsync(cancellationToken), cancellationToken)));
