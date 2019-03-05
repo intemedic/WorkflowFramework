@@ -77,7 +77,7 @@ namespace Hillinworks.WorkflowFramework
             this.CancellationTokenSource.Cancel(throwOnFirstException);
         }
 
-        protected abstract void Build(IWorkflowInitiator builder);
+        protected abstract void Build(IWorkflowInitiator initiator);
 
         protected IEnumerable<Procedure> EnumerateProcedures()
         {
