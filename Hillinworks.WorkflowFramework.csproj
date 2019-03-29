@@ -50,6 +50,7 @@
     <Compile Include="BypassProcedure.cs" />
     <Compile Include="CollectProcedure.cs" />
     <Compile Include="ContextResolverProcedure.cs" />
+    <Compile Include="DelayDispatchProcedure.cs" />
     <Compile Include="InputConcurrentStrategy.cs" />
     <Compile Include="IProcedureInput.cs" />
     <Compile Include="IProcedureInputProcessor.cs" />

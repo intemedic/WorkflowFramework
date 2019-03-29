@@ -5,17 +5,17 @@ using System.Threading.Tasks;
 
 namespace Hillinworks.WorkflowFramework
 {
-    internal class CollectProcedure<TInput, TOutput>
+    internal class DelayDispatchProcedure<TInput>
         : Procedure
             , IProcedureInput<TInput>
-            , IProcedureOutput<TOutput>
+            , IProcedureOutput<TInput>
     {
-        public CollectProcedure(Func<IEnumerable<TInput>, IEnumerable<TOutput>> transform)
+        public DelayDispatchProcedure(TimeSpan duration)
         {
-            this.Transform = transform;
+            this.Duration = duration;
         }
 
-        private Func<IEnumerable<TInput>, IEnumerable<TOutput>> Transform { get; }
+        public TimeSpan Duration { get; }
 
         private List<TInput> Inputs { get; }
             = new List<TInput>();
@@ -28,20 +28,18 @@ namespace Hillinworks.WorkflowFramework
 
         public InputConcurrentStrategy InputConcurrentStrategy => InputConcurrentStrategy.Sequential;
         public int TotalProductCount => this.Predecessor.GetTotalProductCount();
-        public event ProcedureOutputEventHandler<TOutput> Output;
+        public event ProcedureOutputEventHandler<TInput> Output;
 
-
-        protected override Task FinishAsync(CancellationToken cancellationToken)
+        protected override async Task FinishAsync(CancellationToken cancellationToken)
         {
             if (this.Output != null)
             {
-                foreach (var input in this.Transform(this.Inputs))
+                foreach (var input in this.Inputs)
                 {
                     this.Output.Invoke(this, input);
+                    await Task.Delay(this.Duration, cancellationToken);
                 }
             }
-
-            return base.FinishAsync(cancellationToken);
         }
     }
 }

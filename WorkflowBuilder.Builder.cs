@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Hillinworks.WorkflowFramework
 {
@@ -130,10 +131,16 @@ namespace Hillinworks.WorkflowFramework
                 return new Builder<TOutput>(productConsumeNode, this.Context);
             }
 
-            public IWorkflowBuilder<TPredecessorProduct> Collect()
+            public IWorkflowBuilder<TOutput> Collect<TOutput>(Func<IEnumerable<TPredecessorProduct>, IEnumerable<TOutput>> transform = null)
             {
-                return this.AddProductConsumer<CollectProcedure<TPredecessorProduct>, TPredecessorProduct>(
-                    new CollectProcedure<TPredecessorProduct>());
+                return this.AddProductConsumer<CollectProcedure<TPredecessorProduct, TOutput>, TOutput>(
+                    new CollectProcedure<TPredecessorProduct, TOutput>(transform));
+            }
+
+            public IWorkflowBuilder<TPredecessorProduct> DelayDispatch(TimeSpan duration)
+            {
+                return this.AddProductConsumer<DelayDispatchProcedure<TPredecessorProduct>, TPredecessorProduct>(
+                    new DelayDispatchProcedure<TPredecessorProduct>(duration));
             }
         }
     }
