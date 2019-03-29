@@ -14,6 +14,8 @@ namespace Hillinworks.WorkflowFramework
                     return new SequentialProcedureInputProcessor(procedure, cancellationToken);
                 case InputConcurrentStrategy.Parallel:
                     return new ParallelProcedureInputProcessor(procedure, cancellationToken);
+                case InputConcurrentStrategy.Single:
+                    return new SingleProcedureInputProcessor(procedure, cancellationToken);
                 default:
                     throw new ArgumentOutOfRangeException();
             }

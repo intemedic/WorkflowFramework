@@ -54,7 +54,7 @@ namespace Hillinworks.WorkflowFramework
                 this.Node.AddSuccessor(successorNode);
                 return new Builder<TOutput>(successorNode, this.Context);
             }
-            
+
         }
 
 
@@ -67,7 +67,22 @@ namespace Hillinworks.WorkflowFramework
 
             public new IWorkflowBuilder<TPredecessorProduct> SetContext(object context)
             {
-                return (IWorkflowBuilder<TPredecessorProduct>) base.SetContext(context);
+                return (IWorkflowBuilder<TPredecessorProduct>)base.SetContext(context);
+            }
+
+            public IWorkflowBuilder<TPredecessorProduct> AddBypassSuccessor<TProcedure>()
+                where TProcedure : Procedure, new()
+            {
+                return this.AddBypassSuccessor(new TProcedure());
+            }
+
+            public IWorkflowBuilder<TPredecessorProduct> AddBypassSuccessor<TProcedure>(TProcedure procedure)
+                where TProcedure : Procedure
+            {
+                procedure.Context = this.Context;
+
+                return this.AddProductConsumer<BypassProcedure<TPredecessorProduct>, TPredecessorProduct>(
+                    new BypassProcedure<TPredecessorProduct>(procedure));
             }
 
             public IWorkflowBuilder AddProductConsumer<TProcedure>()
@@ -85,6 +100,21 @@ namespace Hillinworks.WorkflowFramework
                 return new Builder(productConsumeNode, this.Context);
             }
 
+            public IWorkflowBuilder<TPredecessorProduct> AddBypassProductConsumer<TProcedure>()
+                where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, new()
+            {
+                return this.AddBypassProductConsumer(new TProcedure());
+            }
+
+            public IWorkflowBuilder<TPredecessorProduct> AddBypassProductConsumer<TProcedure>(TProcedure procedure)
+                where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>
+            {
+                procedure.Context = this.Context;
+
+                return this.AddProductConsumer<BypassProcedure<TProcedure, TPredecessorProduct>, TPredecessorProduct>(
+                    new BypassProcedure<TProcedure, TPredecessorProduct>(procedure));
+            }
+
             public IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>()
                 where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, IProcedureOutput<TOutput>, new()
             {
@@ -98,6 +128,12 @@ namespace Hillinworks.WorkflowFramework
                 var productConsumeNode = new ProcedureTreeNode(procedure, typeof(TPredecessorProduct), typeof(TOutput));
                 this.Node.AddProductConsumer(productConsumeNode);
                 return new Builder<TOutput>(productConsumeNode, this.Context);
+            }
+
+            public IWorkflowBuilder<TPredecessorProduct> Collect()
+            {
+                return this.AddProductConsumer<CollectProcedure<TPredecessorProduct>, TPredecessorProduct>(
+                    new CollectProcedure<TPredecessorProduct>());
             }
         }
     }

@@ -47,6 +47,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BypassProcedure.cs" />
+    <Compile Include="CollectProcedure.cs" />
+    <Compile Include="ContextResolverProcedure.cs" />
     <Compile Include="InputConcurrentStrategy.cs" />
     <Compile Include="IProcedureInput.cs" />
     <Compile Include="IProcedureInputProcessor.cs" />
@@ -58,15 +61,18 @@
     <Compile Include="ParallelProcedureInputProcessor.cs" />
     <Compile Include="Procedure.cs" />
     <Compile Include="ProcedureInputProcessor.cs" />
+    <Compile Include="ProductContext.cs" />
     <Compile Include="SequentialProcedureInputProcessor.cs" />
     <Compile Include="ProcedureStartTime.cs" />
     <Compile Include="ProcedureTreeNode.cs" />
     <Compile Include="ProcedureOutputEventHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SingleProcedureInputProcessor.cs" />
     <Compile Include="Utilities\ExceptionExtension.cs" />
     <Compile Include="Workflow.cs" />
     <Compile Include="WorkflowBuilder.Builder.cs" />
     <Compile Include="WorkflowBuilder.Initiator.cs" />
+    <Compile Include="WorkflowBuilderExtensions.cs" />
     <Compile Include="WorkflowStatus.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,5 @@ namespace Hillinworks.WorkflowFramework
         : IProductConsumerInputConcurrentStrategy
     {
         Task ProcessInputAsync(TInput input, CancellationToken cancellationToken);
-
     }
 }

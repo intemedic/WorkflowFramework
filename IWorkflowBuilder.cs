@@ -24,10 +24,22 @@ namespace Hillinworks.WorkflowFramework
     {
         new IWorkflowBuilder<TPredecessorProduct> SetContext(object context);
 
+        IWorkflowBuilder<TPredecessorProduct> AddBypassSuccessor<TProcedure>()
+            where TProcedure : Procedure, new();
+
+        IWorkflowBuilder<TPredecessorProduct> AddBypassSuccessor<TProcedure>(TProcedure procedure)
+            where TProcedure : Procedure;
+
         IWorkflowBuilder AddProductConsumer<TProcedure>()
             where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, new();
 
         IWorkflowBuilder AddProductConsumer<TProcedure>(TProcedure procedure)
+            where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>;
+
+        IWorkflowBuilder<TPredecessorProduct> AddBypassProductConsumer<TProcedure>()
+            where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, new();
+
+        IWorkflowBuilder<TPredecessorProduct> AddBypassProductConsumer<TProcedure>(TProcedure procedure)
             where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>;
 
         IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>()
@@ -35,6 +47,7 @@ namespace Hillinworks.WorkflowFramework
 
         IWorkflowBuilder<TOutput> AddProductConsumer<TProcedure, TOutput>(TProcedure procedure)
             where TProcedure : Procedure, IProcedureInput<TPredecessorProduct>, IProcedureOutput<TOutput>;
-        
+
+        IWorkflowBuilder<TPredecessorProduct> Collect();
     }
 }

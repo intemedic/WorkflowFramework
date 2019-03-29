@@ -19,7 +19,7 @@ namespace Hillinworks.WorkflowFramework
         internal string DebugName => this.GetType().Name;
 #endif
 
-        public Workflow Workflow
+        protected Workflow Workflow
         {
             get => _workflow;
             private set
@@ -30,12 +30,10 @@ namespace Hillinworks.WorkflowFramework
                 }
 
                 _workflow = value;
-                this.CancellationToken.Register(this.OnCancelled);
             }
         }
-        
+
         public Procedure Predecessor { get; internal set; }
-        protected internal CancellationToken CancellationToken => this.Workflow.CancellationTokenSource.Token;
         public object Context { get; internal set; }
         public Task ExecutionTask { get; internal set; }
 
@@ -71,7 +69,7 @@ namespace Hillinworks.WorkflowFramework
         internal async Task InternalExecuteAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             Logger.Debug($"Executing procedure {this.DebugName}");
 
             await this.ExecuteAsync(cancellationToken);
@@ -196,7 +194,7 @@ namespace Hillinworks.WorkflowFramework
             Interlocked.Increment(ref _productCount);
         }
 
-        protected internal virtual Task FinishAsync(CancellationToken cancellationToken)
+        protected virtual Task FinishAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }

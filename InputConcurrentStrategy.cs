@@ -1,13 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Hillinworks.WorkflowFramework
 {
     public enum InputConcurrentStrategy
     {
+        /// <summary>
+        /// One and only one input will be processed. Exceeded input will cause an
+        /// <see cref="InvalidOperationException"/>.
+        /// </summary>
+        Single,
         /// <summary>
         /// A lock will be used to ensure ProcessInput calls are sequential according
         /// to predecessor's output order.
