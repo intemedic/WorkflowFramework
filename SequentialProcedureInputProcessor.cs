@@ -1,7 +1,7 @@
-﻿using System.Threading;
+﻿using System.Collections.Concurrent;
+using System.Threading;
 using System.Threading.Tasks;
 using slf4net;
-using Tronmedi.Collections;
 
 namespace Hillinworks.WorkflowFramework
 {
@@ -15,14 +15,14 @@ namespace Hillinworks.WorkflowFramework
         }
 
         private Procedure Procedure { get; }
-        private FeedQueue<object> ProductQueue { get; } = new FeedQueue<object>();
+        private BlockingCollection<object> ProductQueue { get; } = new BlockingCollection<object>();
 
         private Task ProcessTask { get; set; }
 
         public Task FinishAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            this.ProductQueue.SignalComplete();
+            this.ProductQueue.CompleteAdding();
             return this.ProcessTask;
         }
 
@@ -30,7 +30,7 @@ namespace Hillinworks.WorkflowFramework
         {
             Logger.Debug($"{this.Procedure.DebugName}: Enqueuing product: [{product}] ({product.GetHashCode()})");
 
-            this.ProductQueue.Enqueue(product);
+            this.ProductQueue.Add(product);
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -44,16 +44,9 @@ namespace Hillinworks.WorkflowFramework
 
         private async Task ProcessQueue(CancellationToken cancellationToken)
         {
-            while (true)
+            foreach (var product in this.ProductQueue.GetConsumingEnumerable())
             {
                 cancellationToken.ThrowIfCancellationRequested();
-
-                var product = this.ProductQueue.Dequeue();
-                if (product == null)
-                {
-                    Logger.Debug($"{this.Procedure.DebugName}: Input exhausted");
-                    return;
-                }
 
                 Logger.Debug($"{this.Procedure.DebugName}: Processing product: [{product}] ({product.GetHashCode()})");
 
@@ -61,6 +54,8 @@ namespace Hillinworks.WorkflowFramework
 
                 await this.Procedure.InvokeProcessInputAsync(product, cancellationToken);
             }
+
+            Logger.Debug($"{this.Procedure.DebugName}: Input exhausted");
         }
     }
 }

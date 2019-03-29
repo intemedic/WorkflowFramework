@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Hillinworks.WorkflowFramework.Utilities.Threading;
 using slf4net;
 
 namespace Hillinworks.WorkflowFramework
@@ -11,6 +12,9 @@ namespace Hillinworks.WorkflowFramework
         private static readonly ILogger Logger = LoggerFactory.GetLogger(nameof(ParallelProcedureInputProcessor));
         private Procedure Procedure { get; }
         private CancellationToken CancellationToken { get; }
+
+        private PriorityMonitor Lock { get; }
+            = new PriorityMonitor();
 
         private List<object> PendingProducts { get; }
             = new List<object>();
@@ -36,14 +40,21 @@ namespace Hillinworks.WorkflowFramework
         {
             if (!this.IsStarted)
             {
-                lock (this.PendingProducts)
+                this.Lock.Lock(0);
+
+                try
                 {
                     if (!this.IsStarted)
                     {
-                        Logger.Debug($"{this.Procedure.DebugName}: Input processor not started yet, add product to pending queue: [{product}] ({product.GetHashCode()})");
+                        Logger.Debug(
+                            $"{this.Procedure.DebugName}: Input processor not started yet, add product to pending queue: [{product}] ({product.GetHashCode()})");
                         this.PendingProducts.Add(product);
                         return;
                     }
+                }
+                finally
+                {
+                    this.Lock.Unlock();
                 }
             }
 
@@ -60,13 +71,19 @@ namespace Hillinworks.WorkflowFramework
         public Task StartAsync(CancellationToken cancellationToken)
         {
             this.IsStarted = true;
-            lock (this.PendingProducts)
+            this.Lock.Lock(1);
+            try
             {
                 foreach (var product in this.PendingProducts)
                 {
-                    Logger.Debug($"{this.Procedure.DebugName}: Processing pending product: [{product}] ({product.GetHashCode()})");
+                    Logger.Debug(
+                        $"{this.Procedure.DebugName}: Processing pending product: [{product}] ({product.GetHashCode()})");
                     this.HandleInput(product);
                 }
+            }
+            finally
+            {
+                this.Lock.Unlock();
             }
 
             return Task.CompletedTask;
