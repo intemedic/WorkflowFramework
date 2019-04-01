@@ -15,6 +15,11 @@
             return new ProductContext<TProduct>(this, product);
         }
 
+        public ProductContext<TProduct> CreateSibling<TProduct>(TProduct product)
+        {
+            return new ProductContext<TProduct>(this.Parent, product);
+        }
+
     }
 
     public abstract class ProductContext
