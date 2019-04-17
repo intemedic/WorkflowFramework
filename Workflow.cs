@@ -26,14 +26,24 @@ namespace Hillinworks.WorkflowFramework
             this.Initialize();
             this.ProcedureTree.Initialize(this);
 
+            var failureCancellationTokenSource = new CancellationTokenSource();
+            var linkedCancellationTokenSource =
+                CancellationTokenSource.CreateLinkedTokenSource(
+                    cancellationToken,
+                    failureCancellationTokenSource.Token);
+
             try
             {
-                await this.ProcedureTree.ExecuteAsync(cancellationToken);
+                await this.ProcedureTree.ExecuteAsync(failureCancellationTokenSource, linkedCancellationTokenSource.Token);
                 this.OnCompleted();
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException ex)
             {
-                this.ProcedureTree.OnCancelled();
+                if (ex.CancellationToken == cancellationToken)
+                {
+                    this.ProcedureTree.OnCancelled();
+                }
+
                 throw;
             }
             catch (Exception)

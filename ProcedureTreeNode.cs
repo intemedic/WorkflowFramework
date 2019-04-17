@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -29,8 +30,8 @@ namespace Hillinworks.WorkflowFramework
 
         private List<ProcedureTreeNode> ProductConsumers { get; } = new List<ProcedureTreeNode>();
 
-        private List<Task> ProductConsumerExecutionTasks { get; }
-            = new List<Task>();
+        private ConcurrentBag<Task> ProductConsumerExecutionTasks { get; }
+            = new ConcurrentBag<Task>();
 
         private IEnumerable<ProcedureTreeNode> Children => this.Successors.Union(this.ProductConsumers);
 
@@ -42,8 +43,11 @@ namespace Hillinworks.WorkflowFramework
 
         private CancellationToken CancellationToken { get; set; }
 
-        internal async Task ExecuteAsync(CancellationToken cancellationToken)
+        internal async Task ExecuteAsync(
+            CancellationTokenSource failureCancellationTokenSource,
+            CancellationToken cancellationToken)
         {
+            this.FailureCancellationTokenSource = failureCancellationTokenSource;
             this.CancellationToken = cancellationToken;
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -62,6 +66,7 @@ namespace Hillinworks.WorkflowFramework
             catch (Exception ex)
             {
                 Logger.Error(ex, $"Error when executing procedure {this.Procedure.GetType().Name}: {ex.FormatMessage()}");
+                failureCancellationTokenSource.Cancel();
                 throw;
             }
 
@@ -70,13 +75,18 @@ namespace Hillinworks.WorkflowFramework
             // execute and wait until all successors are completed
             await Task.WhenAll(
                 this.Successors.Select(
-                    s => Task.Run(() => s.ExecuteAsync(cancellationToken), cancellationToken)));
+                    s => Task.Run(() => s.ExecuteAsync(
+                            failureCancellationTokenSource,
+                            cancellationToken),
+                        cancellationToken)));
 
             cancellationToken.ThrowIfCancellationRequested();
 
             // wait until all product consumers are completed
             await Task.WhenAll(this.ProductConsumerExecutionTasks);
         }
+
+        private CancellationTokenSource FailureCancellationTokenSource { get; set; }
 
         private void OnProcedureOutput(Procedure procedure, object output)
         {
@@ -93,7 +103,9 @@ namespace Hillinworks.WorkflowFramework
                                 this.CancellationToken);
 
                             var task = Task.Run(
-                                () => consumer.ExecuteAsync(this.CancellationToken),
+                                () => consumer.ExecuteAsync(
+                                    this.FailureCancellationTokenSource,
+                                    this.CancellationToken),
                                 this.CancellationToken);
 
                             this.ProductConsumerExecutionTasks.Add(task);
