@@ -55,7 +55,7 @@ namespace Hillinworks.WorkflowFramework
 #endif
         }
 
-        internal void InteralInitialize(Workflow workflow)
+        internal void InternalInitialize(Workflow workflow)
         {
             Logger.Debug($"Initializing procedure {this.DebugName}");
             this.Workflow = workflow;

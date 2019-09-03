@@ -148,7 +148,7 @@ namespace Hillinworks.WorkflowFramework
 
         public void Initialize(Workflow workflow)
         {
-            this.Procedure.InteralInitialize(workflow);
+            this.Procedure.InternalInitialize(workflow);
 
             foreach (var child in this.Children)
             {
